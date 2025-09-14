@@ -6,20 +6,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "./ui/badge";
 
 const Header = () => {
   return (
-    <header className="h-14 bg-card border-b border-border flex items-center justify-between px-6">
-      {/* Logo */}
-      <div className="flex items-center">
-        <div className="text-xl font-bold text-primary">GPS Tracker</div>
-      </div>
-
-      {/* Right Navigation */}
-      <div className="flex items-center gap-4">
-        {/* Language Dropdown */}
+    <header className="bg-card border-b border-border flex items-center justify-between">
+      <div className="w-[71%] h-14 flex items-center justify-between bg-[#04003A] px-4">
+        <div className="flex items-center">
+          <div className="text-xl font-bold text-white">GPS Tracker</div>
+        </div>
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+          <DropdownMenuTrigger asChild className="bg-white rounded-none">
             <Button variant="ghost" size="sm" className="gap-2">
               English
               <ChevronDown className="h-4 w-4" />
@@ -31,34 +28,37 @@ const Header = () => {
             <DropdownMenuItem>French</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+      </div>
 
-        {/* Settings */}
-        <Button variant="ghost" size="sm">
-          <Settings className="h-4 w-4" />
+      <div className="flex items-center gap-4 w-[29%] bg-[#F5F5F5] h-14">
+        <Button variant="ghost" size="sm" className="">
+          <div className="max-w-28">
+            <img src="/assets/icons/setting.png" alt="Setting Icon" className="w-full h-full object-contain" />
+          </div>
         </Button>
 
-        {/* Cart */}
         <Button variant="ghost" size="sm">
-          <ShoppingCart className="h-4 w-4" />
+          <div className="max-w-28">
+            <img src="/assets/icons/cart.png" alt="Setting Icon" className="w-full h-full object-contain" />
+          </div>
+          <Badge className="rounded-md text-gray-600" variant="outline">190</Badge>
         </Button>
 
-        {/* User Profile */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="gap-2">
-              <User className="h-4 w-4" />
-              Admin
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuItem className="text-danger">
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Button variant="ghost" size="sm" className="gap-2 text-[#444444]">
+          <div className="max-w-28">
+            <img src="/assets/icons/user.png" alt="Setting Icon" className="w-full h-full object-contain" />
+          </div>
+          Admin
+          <div className="max-w-28 ms-3">
+            <img src="/assets/icons/tv.png" alt="Setting Icon" className="w-full h-full object-contain" />
+          </div>
+        </Button>
+
+        <Button variant="ghost" size="sm" className="">
+          <div className="max-w-28">
+            <img src="/assets/icons/logout.png" alt="Setting Icon" className="w-full h-full object-contain" />
+          </div>
+        </Button>
       </div>
     </header>
   );
