@@ -3,20 +3,27 @@ import { useFormik } from "formik";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import LoginSchema from "@/validators/login-schema";
+import { useAuth } from "@/hooks/auth-hook";
 
-const Login: React.FC = () => {
+const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const { isLoading, handlePrimaryLogin } = useAuth();
 
   const formik = useFormik({
     initialValues: {
-      username: "",
-      password: "",
+      user: "",
+      pass: "",
     },
     validationSchema: LoginSchema,
-    onSubmit: (values) => {
-      console.log("Login Data:", values);
+    onSubmit: async (values) => {
+      try{
+        console.log("Login Data:", values);
+        await handlePrimaryLogin(values);
+      }catch(error){
+        console.log(error);
+      }
     },
   });
 
@@ -45,19 +52,19 @@ const Login: React.FC = () => {
                   <img src="/assets/auth-icons/user.png" alt="User Icon" className="w-3 h-auto object-cover" />
                 </div>
                 <Input
-                  id="username"
-                  name="username"
+                  id="user"
+                  name="user"
                   type="text"
                   placeholder="Username"
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
-                  value={formik.values.username}
+                  value={formik.values.user}
                   className="w-full pl-8 pr-3 py-2 border rounded-md"
                 />
               </div>
-              {formik.touched.username && formik.errors.username && (
+              {formik.touched.user && formik.errors.user && (
                 <p className="text-red-500 text-sm mt-1">
-                  {formik.errors.username}
+                  {formik.errors.user}
                 </p>
               )}
             </div>
@@ -68,13 +75,13 @@ const Login: React.FC = () => {
                   <img src="/assets/auth-icons/lock.png" alt="Lock Icon" className="w-3 h-auto object-cover" />
                 </span>
                 <Input
-                  id="password"
-                  name="password"
+                  id="pass"
+                  name="pass"
                   type={showPassword ? "text" : "password"}
                   placeholder="Password"
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
-                  value={formik.values.password}
+                  value={formik.values.pass}
                   className="w-full pl-8 pr-10 py-2 border rounded-md"
                 />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3">
@@ -86,9 +93,9 @@ const Login: React.FC = () => {
                 </button>
               </div>
 
-              {formik.touched.password && formik.errors.password && (
+              {formik.touched.pass && formik.errors.pass && (
                 <p className="text-red-500 text-sm mt-1">
-                  {formik.errors.password}
+                  {formik.errors.pass}
                 </p>
               )}
             </div>
@@ -100,7 +107,7 @@ const Login: React.FC = () => {
             </div>
 
             <Button type="submit" className="w-full rounded-none bg-[#04003A] text-white py-2">
-              Login
+              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Login"}
             </Button>
 
             <div className="flex items-end justify-end mt-4">

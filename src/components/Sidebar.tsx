@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import ObjectsTable from "./Objects-table";
+import EventsTable from "./Events-table";
 
 interface SidebarProps {
   activeTab?: string;
@@ -103,7 +104,39 @@ const Sidebar = ({ activeTab = "Objects", onTabChange }: SidebarProps) => {
         </div>
       )}
 
-      {selectedTab !== "Objects" && (
+      {selectedTab === "Events" && (
+        <div className="flex-1 flex flex-col">
+          <div className="py-4 flex items-center gap-2 border-b border-border">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Search" className="pl-9 bg-[#04003A] placeholder:text-gray-300 rounded-none" />
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <Button variant="outline" className="bg-[#04003A] rounded-none hover:bg-blue-950" size="sm">
+                <div className="max-w-28">
+                  <img src="/assets/icons/refresh.png" alt="refresh Icon" className="w-full h-full object-contain" />
+                </div>
+              </Button>
+              <Button variant="outline" className="bg-[#04003A] rounded-none hover:bg-blue-950" size="sm">
+                <div className="max-w-28">
+                  <img src="/assets/icons/sunlight.png" alt="sunlight Icon" className="w-full h-full object-contain" />
+                </div>
+              </Button>
+              <Button variant="outline" className="bg-[#04003A] rounded-none hover:bg-blue-950" size="sm">
+                <div className="max-w-28">
+                  <img src="/assets/icons/plus.png" alt="plus Icon" className="w-full h-full object-contain" />
+                </div>
+              </Button>
+            </div>
+          </div>
+
+          <EventsTable />
+        </div>
+      )}
+
+      {selectedTab !== "Objects" && selectedTab !== "Events" && (
         <div className="flex-1 flex items-center justify-center text-muted-foreground">
           {selectedTab} content coming soon...
         </div>
