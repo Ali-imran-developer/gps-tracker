@@ -18,7 +18,7 @@ export const useAuth = () => {
       const response: any = await AuthController.userLogin(data);
       console.log("Login api response", response);
       if(response){
-        AuthController.setSession({ user: response });
+        AuthController.setSession({ user: response, credentials: data });
         dispatch(setUser(response))
         navigate("/");
       }
