@@ -17,6 +17,7 @@ import { useDispatch, useSelector } from "react-redux";
 import AuthController from "@/controllers/authController";
 import formatDate from "@/utils/format-date";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { io, Socket } from "socket.io-client";
 
 const ObjectsTable = () => {
   const { isLoading, handleCheckalldevices, handleGetTrackLocations, handleGetCookie } = useGeoFence();
@@ -24,34 +25,69 @@ const ObjectsTable = () => {
   const [isGroupExpanded, setIsGroupExpanded] = useState(true);
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const session = AuthController.getSession();
+  const SOCKET_URL = import.meta.env.VITE_WEBSOCKET_URL;
   const [messages, setMessages] = useState<string[]>([]);
-  const webSocketUrl = import.meta.env.VITE_WEBSOCKET_URL;
+  const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
-    const ws = new WebSocket(webSocketUrl);
+    const socketInstance = io(SOCKET_URL, {
+      path: "/api/socket",
+      transports: ["websocket"],
+      secure: true,
+      reconnection: true,
+      reconnectionAttempts: 5,
+    });
 
-    ws.onopen = () => {
-      console.log("✅ WebSocket connected");
-      ws.send(JSON.stringify({ type: "auth/check" }));
-    };
+    setSocket(socketInstance);
 
-    ws.onmessage = (event) => {
-      console.log("📩 Received:", event.data);
-      setMessages((prev) => [event.data, ...prev]);
-    };
+    socketInstance.on("connect", () => {
+      console.log("✅ Socket.IO connected", socketInstance.id);
+      socketInstance.emit("auth/check");
+    });
 
-    ws.onclose = (event) => {
-      console.log("❌ WebSocket closed:", event);
-    };
+    socketInstance.on("message", (data) => {
+      console.log("📩 Received:", data);
+      setMessages((prev) => [data, ...prev]);
+    });
 
-    ws.onerror = (err) => {
-      console.error("⚠️ WebSocket error:", err);
-    };
+    socketInstance.on("disconnect", (reason) => {
+      console.log("❌ Socket.IO disconnected:", reason);
+    });
+
+    socketInstance.on("connect_error", (err) => {
+      console.error("⚠️ Connection error:", err.message);
+    });
 
     return () => {
-      ws.close();
+      socketInstance.disconnect();
     };
   }, []);
+
+  // useEffect(() => {
+  //   const ws = new WebSocket(webSocketUrl);
+
+  //   ws.onopen = () => {
+  //     console.log("✅ WebSocket connected");
+  //     ws.send(JSON.stringify({ type: "auth/check" }));
+  //   };
+
+  //   ws.onmessage = (event) => {
+  //     console.log("📩 Received:", event.data);
+  //     setMessages((prev) => [event.data, ...prev]);
+  //   };
+
+  //   ws.onclose = (event) => {
+  //     console.log("❌ WebSocket closed:", event);
+  //   };
+
+  //   ws.onerror = (err) => {
+  //     console.error("⚠️ WebSocket error:", err);
+  //   };
+
+  //   return () => {
+  //     ws.close();
+  //   };
+  // }, []);
 
   console.log("messages", messages);
 
