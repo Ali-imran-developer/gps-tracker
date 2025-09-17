@@ -39,52 +39,53 @@ const Dashboard = ({ onNavigate }: DashboardProps) => {
   ];
 
   return (
-    <div className="bg-background min-h-screen">
-      <div className="flex items-center justify-between bg-[#04003A]">
-        <h1 className="text-2xl font-bold text-white ms-6">Dashboard</h1>
-        <Button  variant="outline" className="bg-transparent border-none rounded-none hover:bg-blue-950" onClick={() => onNavigate?.("main")}>
-          <img src="/assets/icons/cross.png" alt="cross" />
+    <div className="bg-background min-h-screen overflow-y-auto">
+      <div className="flex items-center justify-between bg-[#04003A] h-12 lg:h-14 px-2 lg:px-6">
+        <h1 className="text-lg lg:text-2xl font-bold text-white">Dashboard</h1>
+        <Button variant="outline" className="bg-transparent border-none rounded-none hover:bg-blue-950 p-1 lg:p-2" onClick={() => onNavigate?.("main")}>
+          <img src="/assets/icons/cross.png" alt="cross" className="w-4 h-4 lg:w-6 lg:h-6" />
         </Button>
       </div>
 
-      <div className="p-6 space-y-6 ">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="p-2 lg:p-6 space-y-3 lg:space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-4">
           <Card className="rounded-none border-none shadow-md">
-            <CardHeader className="flex flex-row items-center justify-between rounded-none space-y-0 bg-[#67CDFD] h-[20px]">
-              <div className="text-white flex items-center gap-2">
-                <img src="/assets/dashboard-icons/send.png" alt="send" />
-                <CardTitle className="text-base font-medium">Objects</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between rounded-none space-y-0 bg-[#67CDFD] h-[15px] lg:h-[20px] px-2 lg:px-4">
+              <div className="text-white flex items-center gap-1 lg:gap-2">
+                <img src="/assets/dashboard-icons/send.png" alt="send" className="w-3 h-3 lg:w-4 lg:h-4" />
+                <CardTitle className="text-xs lg:text-base font-medium">Objects</CardTitle>
               </div>
-              <img src="/assets/dashboard-icons/setting.png" alt="setting" />
+              <img src="/assets/dashboard-icons/setting.png" alt="setting" className="w-3 h-3 lg:w-4 lg:h-4" />
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-2 lg:p-6">
               <div className="flex items-center justify-center">
                 <div className="relative">
-                  <RadialBarChart width={200} height={200} cx="50%" cy="50%" innerRadius="80%" outerRadius="100%"
-                    barSize={20} data={[{ name: "Progress", value: 75, fill: "#22c55e" }]} startAngle={90} endAngle={-270}>
+                  <RadialBarChart width={120} height={120} cx="50%" cy="50%" innerRadius="70%" outerRadius="90%"
+                    barSize={15} data={[{ name: "Progress", value: 75, fill: "#22c55e" }]} startAngle={90} endAngle={-270}
+                    className="lg:w-[200px] lg:h-[200px]">
                     <RadialBar dataKey="value" cornerRadius={10} />
                   </RadialBarChart>
 
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-xl font-bold text-gray-700">75%</span>
+                    <span className="text-sm lg:text-xl font-bold text-gray-700">75%</span>
                   </div>
                 </div>
               </div>
-              <h2 className="text-[#595959] text-center text-[24px]">Object control</h2>
+              <h2 className="text-[#595959] text-center text-sm lg:text-[24px] mt-2">Object control</h2>
             </CardContent>
           </Card>
 
           <Card className="rounded-none border-none shadow-md">
-            <CardHeader className="flex flex-row items-center justify-between rounded-none space-y-0 bg-[#67CDFD] h-[20px]">
-              <div className="text-white flex items-center gap-2">
-                <img src="/assets/dashboard-icons/calender.png" alt="send" />
-                <CardTitle className="text-base font-medium">Events (Today)</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between rounded-none space-y-0 bg-[#67CDFD] h-[15px] lg:h-[20px] px-2 lg:px-4">
+              <div className="text-white flex items-center gap-1 lg:gap-2">
+                <img src="/assets/dashboard-icons/calender.png" alt="send" className="w-3 h-3 lg:w-4 lg:h-4" />
+                <CardTitle className="text-xs lg:text-base font-medium">Events (Today)</CardTitle>
               </div>
-              <img src="/assets/dashboard-icons/setting.png" alt="setting" />
+              <img src="/assets/dashboard-icons/setting.png" alt="setting" className="w-3 h-3 lg:w-4 lg:h-4" />
             </CardHeader>
-            <CardContent>
-              <div className="h-40 w-full">
-                <ResponsiveContainer width="100%" height="100%" className="bg-[#E6E7E8] rounded-md mt-6">
+            <CardContent className="p-2 lg:p-6">
+              <div className="h-24 lg:h-40 w-full">
+                <ResponsiveContainer width="100%" height="100%" className="bg-[#E6E7E8] rounded-md mt-2 lg:mt-6">
                   <LineChart
                     data={[
                       { name: "Jan", value: 40 },
@@ -100,7 +101,7 @@ const Dashboard = ({ onNavigate }: DashboardProps) => {
                       { name: "Nov", value: 65 },
                       { name: "Dec", value: 70 },
                     ]}
-                    margin={{ top: 35, right: 20, left: -30, bottom: -30 }}
+                    margin={{ top: 20, right: 20, left: -30, bottom: -30 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} horizontal={false} />
                     <XAxis dataKey="name" tick={false} axisLine={false} tickLine={false} />
@@ -111,29 +112,29 @@ const Dashboard = ({ onNavigate }: DashboardProps) => {
                       dataKey="value"
                       stroke="#2563eb"
                       strokeWidth={2}
-                      dot={{ r: 4, fill: "#2563eb" }}
-                      activeDot={{ r: 6 }}
+                      dot={{ r: 3, fill: "#2563eb" }}
+                      activeDot={{ r: 4 }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
 
-              <h2 className="text-[#595959] text-center text-[24px] mt-4">
+              <h2 className="text-[#595959] text-center text-sm lg:text-[24px] mt-2">
                 Events (Today)
               </h2>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between rounded-none space-y-0 bg-[#67CDFD] h-[20px]">
-              <div className="text-white flex items-center gap-2">
-                <img src="/assets/dashboard-icons/wrench.png" alt="send" />
-                <CardTitle className="text-base font-medium">Maintenance</CardTitle>
+          <Card className="rounded-none border-none shadow-md">
+            <CardHeader className="flex flex-row items-center justify-between rounded-none space-y-0 bg-[#67CDFD] h-[15px] lg:h-[20px] px-2 lg:px-4">
+              <div className="text-white flex items-center gap-1 lg:gap-2">
+                <img src="/assets/dashboard-icons/wrench.png" alt="send" className="w-3 h-3 lg:w-4 lg:h-4" />
+                <CardTitle className="text-xs lg:text-base font-medium">Maintenance</CardTitle>
               </div>
-              <img src="/assets/dashboard-icons/setting.png" alt="setting" />
+              <img src="/assets/dashboard-icons/setting.png" alt="setting" className="w-3 h-3 lg:w-4 lg:h-4" />
             </CardHeader>
-            <CardContent>
-              <div className="h-40 w-full mt-10">
+            <CardContent className="p-2 lg:p-6">
+              <div className="h-24 lg:h-40 w-full mt-4 lg:mt-10">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={[
@@ -142,20 +143,20 @@ const Dashboard = ({ onNavigate }: DashboardProps) => {
                       { name: "3", value: 60 },
                       { name: "4", value: 80 },
                     ]}
-                    margin={{ top: 10, right: 30, left: 10, bottom: 0 }}
+                    margin={{ top: 10, right: 15, left: 5, bottom: 0 }}
                   >
                     <XAxis
                       dataKey="name"
                       axisLine={true}
                       tickLine={false}
-                      tick={{ fill: "#595959", fontSize: 12 }}
+                      tick={{ fill: "#595959", fontSize: 10 }}
                     />
 
                     <YAxis
-                      ticks={[0, 10, 20, 30, 40, 50, 60, 70, 80]}
+                      ticks={[0, 20, 40, 60, 80]}
                       axisLine={true}
                       tickLine={false}
-                      tick={{ fill: "#595959", fontSize: 12 }}
+                      tick={{ fill: "#595959", fontSize: 10 }}
                     />
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <Tooltip cursor={{ fill: "transparent" }} />
@@ -167,29 +168,29 @@ const Dashboard = ({ onNavigate }: DashboardProps) => {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <h2 className="text-[#595959] text-center text-[24px]">
-                Maintainance
+              <h2 className="text-[#595959] text-center text-sm lg:text-[24px] mt-2">
+                Maintenance
               </h2>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between rounded-none space-y-0 bg-[#67CDFD] h-[20px]">
-              <div className="text-white flex items-center gap-2">
-                <img src="/assets/dashboard-icons/check.png" alt="send" />
-                <CardTitle className="text-base font-medium">Task (Today)</CardTitle>
+          <Card className="rounded-none border-none shadow-md">
+            <CardHeader className="flex flex-row items-center justify-between rounded-none space-y-0 bg-[#67CDFD] h-[15px] lg:h-[20px] px-2 lg:px-4">
+              <div className="text-white flex items-center gap-1 lg:gap-2">
+                <img src="/assets/dashboard-icons/check.png" alt="send" className="w-3 h-3 lg:w-4 lg:h-4" />
+                <CardTitle className="text-xs lg:text-base font-medium">Task (Today)</CardTitle>
               </div>
-              <img src="/assets/dashboard-icons/setting.png" alt="setting" />
+              <img src="/assets/dashboard-icons/setting.png" alt="setting" className="w-3 h-3 lg:w-4 lg:h-4" />
             </CardHeader>
-            <CardContent>
-              <div className="space-y-5 mt-10">
+            <CardContent className="p-2 lg:p-6">
+              <div className="space-y-2 lg:space-y-5 mt-4 lg:mt-10">
                 {dailyTasks.slice(0, 4).map((task, index) => (
                   <div key={index} className="space-y-1">
                     <div className="flex justify-between text-xs">
-                      <span className="truncate">{task.name}</span>
-                      <span>{task.progress}%</span>
+                      <span className="truncate text-xs lg:text-sm">{task.name}</span>
+                      <span className="text-xs lg:text-sm">{task.progress}%</span>
                     </div>
-                    <Progress value={task.progress} className="h-1" />
+                    <Progress value={task.progress} className="h-1 lg:h-2" />
                   </div>
                 ))}
               </div>
@@ -197,20 +198,20 @@ const Dashboard = ({ onNavigate }: DashboardProps) => {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader className="bg-[#727270] text-white h-[20px] mb-4 relative">
-              <CardTitle className="text-lg pb-2 absolute top-2 left-4">110 Odometer Top 10 (km)</CardTitle>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 lg:gap-6">
+          <Card className="rounded-none border-none shadow-md">
+            <CardHeader className="bg-[#727270] text-white h-[15px] lg:h-[20px] mb-2 lg:mb-4 relative px-2 lg:px-4">
+              <CardTitle className="text-sm lg:text-lg pb-2 absolute top-1 lg:top-2 left-2 lg:left-4">110 Odometer Top 10 (km)</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="h-64 w-full">
+            <CardContent className="p-2 lg:p-6">
+              <div className="h-32 lg:h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={odometerData} margin={{ top: 20, right: 30, left: 0, bottom: 10 }}>
+                  <LineChart data={odometerData} margin={{ top: 20, right: 15, left: 0, bottom: 10 }}>
                     <CartesianGrid stroke="#000" strokeDasharray="0" vertical={false} />
                     <YAxis
-                      ticks={[0, 10, 100, 200, 300, 400, 500]}
+                      ticks={[0, 100, 200, 300, 400, 500]}
                       domain={[0, 500]}
-                      tick={{ fill: "#000", fontSize: 12 }}
+                      tick={{ fill: "#000", fontSize: 10 }}
                       axisLine={false}
                       tickLine={false}
                     />
@@ -220,7 +221,7 @@ const Dashboard = ({ onNavigate }: DashboardProps) => {
                       dataKey="km"
                       stroke="#ef4444"
                       strokeWidth={2}
-                      dot={{ r: 6, fill: "black" }}
+                      dot={{ r: 4, fill: "black" }}
                       isAnimationActive={false}
                     >
                       <LabelList
@@ -231,20 +232,20 @@ const Dashboard = ({ onNavigate }: DashboardProps) => {
                           return (
                             <g>
                               <rect
-                                x={x - 15}
-                                y={y - 30}
-                                width={30}
-                                height={18}
+                                x={x - 12}
+                                y={y - 25}
+                                width={24}
+                                height={15}
                                 fill={item?.labelColor}
                                 rx={3}
                                 ry={3}
                               />
                               <text
                                 x={x}
-                                y={y - 17}
+                                y={y - 15}
                                 textAnchor="middle"
                                 fill="#fff"
-                                fontSize={10}
+                                fontSize={8}
                                 fontWeight="bold"
                               >
                                 {value}
@@ -261,12 +262,12 @@ const Dashboard = ({ onNavigate }: DashboardProps) => {
           </Card>
 
           {/* Mileage Map */}
-          <Card>
-            <CardHeader className="bg-[#727270] text-white h-[20px] relative">
-              <CardTitle className="text-lg pb-2 absolute top-2 left-4">Mileage (km)</CardTitle>
+          <Card className="rounded-none border-none shadow-md">
+            <CardHeader className="bg-[#727270] text-white h-[15px] lg:h-[20px] relative px-2 lg:px-4">
+              <CardTitle className="text-sm lg:text-lg pb-2 absolute top-1 lg:top-2 left-2 lg:left-4">Mileage (km)</CardTitle>
             </CardHeader>
             <CardContent className="p-0 m-0">
-              <img src="/assets/banner/dashboard-map-banner.png" alt="Dashboard Map" className="w-full h-[295px] object-cover" />
+              <img src="/assets/banner/dashboard-map-banner.png" alt="Dashboard Map" className="w-full h-32 lg:h-[295px] object-cover" />
             </CardContent>
           </Card>
         </div>
