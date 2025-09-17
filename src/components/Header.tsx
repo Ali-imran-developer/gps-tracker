@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "./ui/badge";
+import { logout } from "@/utils/auth";
 
 const Header = () => {
   return (
@@ -54,7 +55,7 @@ const Header = () => {
           </div>
         </Button>
 
-        <Button variant="ghost" size="sm" className="">
+        <Button variant="ghost" size="sm" className="" onClick={() => logout()}>
           <div className="max-w-28">
             <img src="/assets/icons/logout.png" alt="Setting Icon" className="w-full h-full object-contain" />
           </div>

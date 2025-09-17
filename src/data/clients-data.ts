@@ -1,4 +1,4 @@
-const clientsData = [
+[
   {
     ac: 0,
     address: null,
@@ -13,6 +13,7 @@ const clientsData = [
       ignition: true,
       motion: true,
       out1: false,
+      adc1: 30,
       power: 12.1,
       sat: 15,
       status: "4294966271",
@@ -27,6 +28,7 @@ const clientsData = [
     cellId: 26474,
     ci: false,
     contact: "923216592157",
+    di1: 1,
     course: 98,
     deviceId: 468,
     deviceTime: "2025-06-24T20:15:17.000+00:00",

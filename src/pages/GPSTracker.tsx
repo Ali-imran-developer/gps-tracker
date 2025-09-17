@@ -23,7 +23,7 @@ const GPSTracker = () => {
   return (
     <div className="h-screen flex flex-col bg-background">
       <Header />
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-y-auto">
         <Sidebar activeTab={activeTab} onTabChange={handleTabChange} />
         <MapView onNavigate={handleNavigation} />
       </div>

@@ -1,4 +1,3 @@
-import { Login } from "../types";
 import { apiRequest } from "./apiController";
 
 class GeoFenceController {
@@ -8,6 +7,10 @@ class GeoFenceController {
   }
   static trackLocation(data: any) {
     const queryString = `checkallpositionszahid.php?username=${data?.username}&password=${data?.password}`;
+    return apiRequest("get", `/${queryString}`);
+  }
+  static getUserCookie(data: any) {
+    const queryString = `geofence/mohsinget.php?username=${data?.username}&password=${data?.password}`;
     return apiRequest("get", `/${queryString}`);
   }
 }
