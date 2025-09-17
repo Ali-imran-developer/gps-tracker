@@ -16,8 +16,6 @@ import { useGeoFence } from "@/hooks/geoFecnce-hook";
 import { useDispatch, useSelector } from "react-redux";
 import AuthController from "@/controllers/authController";
 import formatDate from "@/utils/format-date";
-import { useWebSocket } from "@/hooks/useWebSocket";
-import { io, Socket } from "socket.io-client";
 
 const ObjectsTable = () => {
   const { isLoading, handleCheckalldevices, handleGetTrackLocations, handleGetCookie } = useGeoFence();
@@ -25,71 +23,55 @@ const ObjectsTable = () => {
   const [isGroupExpanded, setIsGroupExpanded] = useState(true);
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const session = AuthController.getSession();
-  const SOCKET_URL = import.meta.env.VITE_WEBSOCKET_URL;
-  const [messages, setMessages] = useState<string[]>([]);
-  const [socket, setSocket] = useState<Socket | null>(null);
+  // const SOCKET_URL = import.meta.env.VITE_WEBSOCKET_URL || 'ws://35.225.168.22';
+  // const [messages, setMessages] = useState<any[]>([]);
 
-  useEffect(() => {
-    const socketInstance = io(SOCKET_URL, {
-      path: "/api/socket",
-      transports: ["websocket"],
-      secure: true,
-      reconnection: true,
-      reconnectionAttempts: 5,
-    });
+  // // Use the raw WebSocket hook with authentication
+  // const { send, readyState, disconnect } = useWebSocket(SOCKET_URL, {
+  //   // Include authentication from stored session
+  //   withCredentials: true,
+  //   sessionId: session?.sessionId,
 
-    setSocket(socketInstance);
-
-    socketInstance.on("connect", () => {
-      console.log("✅ Socket.IO connected", socketInstance.id);
-      socketInstance.emit("auth/check");
-    });
-
-    socketInstance.on("message", (data) => {
-      console.log("📩 Received:", data);
-      setMessages((prev) => [data, ...prev]);
-    });
-
-    socketInstance.on("disconnect", (reason) => {
-      console.log("❌ Socket.IO disconnected:", reason);
-    });
-
-    socketInstance.on("connect_error", (err) => {
-      console.error("⚠️ Connection error:", err.message);
-    });
-
-    return () => {
-      socketInstance.disconnect();
-    };
-  }, []);
-
-  // useEffect(() => {
-  //   const ws = new WebSocket(webSocketUrl);
-
-  //   ws.onopen = () => {
+  //   // WebSocket event handlers
+  //   onOpen: () => {
   //     console.log("✅ WebSocket connected");
-  //     ws.send(JSON.stringify({ type: "auth/check" }));
-  //   };
+  //     // Send initial authentication message
+  //     send(JSON.stringify({
+  //       type: "auth/check",
+  //       credentials: {
+  //         user: session?.credentials?.user,
+  //         pass: session?.credentials?.pass,
+  //         sessionId: session?.sessionId
+  //       }
+  //     }));
+  //   },
 
-  //   ws.onmessage = (event) => {
-  //     console.log("📩 Received:", event.data);
-  //     setMessages((prev) => [event.data, ...prev]);
-  //   };
+  //   onMessage: (data) => {
+  //     console.log("📩 Received:", data);
+  //     setMessages((prev) => [data, ...prev]);
+  //   },
 
-  //   ws.onclose = (event) => {
-  //     console.log("❌ WebSocket closed:", event);
-  //   };
+  //   onError: (error) => {
+  //     console.error("⚠️ WebSocket error:", error);
+  //   },
 
-  //   ws.onerror = (err) => {
-  //     console.error("⚠️ WebSocket error:", err);
-  //   };
+  //   onClose: (event) => {
+  //     console.log("❌ WebSocket closed:", event.code, event.reason);
+  //   },
 
+  //   // Auto-reconnect after 3 seconds
+  //   autoReconnectMs: 3000
+  // });
+
+  // // Cleanup on unmount
+  // useEffect(() => {
   //   return () => {
-  //     ws.close();
+  //     disconnect();
   //   };
-  // }, []);
+  // }, [disconnect]);
 
-  console.log("messages", messages);
+
+  // console.log("messages", messages);
 
   const toggleExpand = (id: number) => {
     setExpandedRow(expandedRow === id ? null : id);
@@ -110,16 +92,6 @@ const ObjectsTable = () => {
     person: User,
   };
 
-  useEffect(() => {
-    const queryParams = {
-      username: session?.credentials?.user ?? "",
-      password: session?.credentials?.pass ?? "",
-    };
-
-    handleGetCookie(queryParams);
-    handleCheckalldevices(queryParams);
-    handleGetTrackLocations(queryParams);
-  }, []);
 
   return (
     <div className="w-full max-w-md mx-auto border border-gray-300 rounded-md shadow-sm bg-white font-sans">
@@ -140,10 +112,21 @@ const ObjectsTable = () => {
           />
         </button>
 
-        <div className="col-span-8 flex items-center justify-start px-2 h-full">
+        <div className="col-span-8 flex items-center justify-between px-2 h-full">
           <span className="text-sm font-medium text-gray-800 ps-4">
             Objects
           </span>
+          {/* <div className="flex items-center gap-2 text-xs">
+            <span className={`px-2 py-1 rounded ${
+              readyState === WebSocket.OPEN ? 'bg-green-500 text-white' :
+              readyState === WebSocket.CONNECTING ? 'bg-yellow-500 text-white' :
+              'bg-red-500 text-white'
+            }`}>
+              {readyState === WebSocket.OPEN ? 'Connected' :
+               readyState === WebSocket.CONNECTING ? 'Connecting...' :
+               'Disconnected'}
+            </span>
+          </div> */}
         </div>
       </div>
 

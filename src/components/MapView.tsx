@@ -16,8 +16,8 @@ const containerStyle = {
 };
 
 const center = {
-  lat: 37.7749,
-  lng: -122.4194,
+  lat: 30.338435555556,
+  lng: 71.27813,
 };
 
 const MapView = ({ onNavigate }: MapViewProps) => {

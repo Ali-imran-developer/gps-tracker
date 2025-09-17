@@ -13,16 +13,7 @@ interface SidebarProps {
 
 const Sidebar = ({ activeTab = "Objects", onTabChange }: SidebarProps) => {
   const [selectedTab, setSelectedTab] = useState(activeTab);
-
   const tabs = ["Objects", "Events", "Places", "History"];
-  
-  const objectsData = [
-    { id: 1, name: "Vehicle-001", status: "active", user: "John Doe" },
-    { id: 2, name: "Vehicle-002", status: "idle", user: "Jane Smith" },
-    { id: 3, name: "Vehicle-003", status: "active", user: "Mike Johnson" },
-    { id: 4, name: "Vehicle-004", status: "maintenance", user: "Sarah Wilson" },
-    { id: 5, name: "Vehicle-005", status: "active", user: "David Brown" },
-  ];
 
   const handleTabClick = (tab: string) => {
     setSelectedTab(tab);
