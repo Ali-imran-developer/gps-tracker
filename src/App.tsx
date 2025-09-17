@@ -5,10 +5,10 @@ import Login from "./pages/Login";
 import AuthController from "./controllers/authController";
 
 const ProtectedRoute = ({ children }) => {
-  const session = AuthController.getSession();
-  if (!session || !session.user) {
-    return <Navigate to="/login" replace />;
-  }
+  // const session = AuthController.getSession();
+  // if (!session || !session.user) {
+  //   return <Navigate to="/login" replace />;
+  // }
   return children;
 };
 
