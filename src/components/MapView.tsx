@@ -1,326 +1,3 @@
-// import React, { useState, useMemo, useEffect, useRef } from "react";
-// import { BarChart3, FileText, MapPin, Info, X } from "lucide-react";
-// import { Button } from "@/components/ui/button";
-// import { cn } from "@/lib/utils";
-// import { GoogleMap, LoadScript, Marker, Polygon, InfoWindow, Circle } from "@react-google-maps/api";
-// import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
-// import { mapTools, topControls } from "@/data/map-view";
-
-// interface MapViewProps {
-//   cities: any[];
-//   selectedItems: any[];
-//   onNavigate?: (page: string) => void;
-// }
-
-// const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-
-// const containerStyle = {
-//   width: "100%",
-//   height: "100%",
-// };
-
-// const parsePolygon = (wkt: string) => {
-//   const coords = wkt.replace("POLYGON((", "").replace("))", "").split(",");
-//   return coords.map((c) => {
-//     const [lat, lng] = c.trim().split(" ").map(Number);
-//     return { lat, lng };
-//   });
-// };
-
-// const parseCircle = (wkt: string) => {
-//   const match = wkt.match(/CIRCLE\(\(([^)]+)\)\)/);
-//   if (match) {
-//     const [lat, lng, radius] = match[1].split(" ").map(Number);
-//     return { center: { lat, lng }, radius };
-//   }
-//   return null;
-// };
-
-// const getPolygonCenter = (path: { lat: number; lng: number }[]) => {
-//   const bounds = new google.maps.LatLngBounds();
-//   path.forEach(point => bounds.extend(point));
-//   return bounds.getCenter().toJSON();
-// };
-
-// const getAreaType = (area: string) => {
-//   if (area?.startsWith('POLYGON')) return 'polygon';
-//   if (area?.startsWith('CIRCLE')) return 'circle';
-//   return 'unknown';
-// };
-
-// const MapView = ({ cities, selectedItems, onNavigate }: MapViewProps) => {
-//   const [activeControl, setActiveControl] = useState<string | null>(null);
-//   const [center] = useState({ lat: 30.3384, lng: 71.2781 });
-//   const [zoom, setZoom] = useState(16);
-//   const mapRef = useRef<google.maps.Map | null>(null);
-//   const [selectedArea, setSelectedArea] = useState<any | null>(null);
-//   const [showDetailsPanel, setShowDetailsPanel] = useState(false);
-
-//   useEffect(() => {
-//     if (selectedItems.length > 0 && mapRef.current) {
-//       const lat = parseFloat(selectedItems[0].lat || "0");
-//       const lng = parseFloat(selectedItems[0].longi || "0");
-//       const newCenter = { lat, lng };
-//       mapRef.current.panTo(newCenter);
-//       mapRef.current.setZoom(16);
-//     }
-//   }, [selectedItems]);
-
-//   const handleControlClick = (controlId: string) => {
-//     if (controlId === "dashboard") {
-//       onNavigate?.("dashboard");
-//     } else {
-//       setActiveControl(activeControl === controlId ? null : controlId);
-//     }
-//   };
-
-//   const handleAreaSelect = (area: any) => {
-//     setSelectedArea(area);
-//     setShowDetailsPanel(true);
-//   };
-
-//   const handleMapClick = () => {
-//     setShowDetailsPanel(false);
-//     setSelectedArea(null);
-//   };
-
-//   const getRelevantAreas = () => {
-//     if (!selectedItems.length) return cities || [];
-    
-//     return cities?.filter(city => {
-//       return selectedItems.some(item => {
-//         const itemLat = parseFloat(item.lat || "0");
-//         const itemLng = parseFloat(item.longi || "0");
-        
-//         const areaType = getAreaType(city.area);
-        
-//         if (areaType === 'polygon') {
-//           const cityPath = parsePolygon(city.area);
-//           const cityCenter = getPolygonCenter(cityPath);
-//           const distance = Math.sqrt(
-//             Math.pow(itemLat - cityCenter.lat, 2) + 
-//             Math.pow(itemLng - cityCenter.lng, 2)
-//           );
-//           return distance < 0.01;
-//         } else if (areaType === 'circle') {
-//           const circleData = parseCircle(city.area);
-//           if (circleData) {
-//             const distance = Math.sqrt(
-//               Math.pow(itemLat - circleData.center.lat, 2) + 
-//               Math.pow(itemLng - circleData.center.lng, 2)
-//             );
-//             return distance < 0.01;
-//           }
-//         }
-        
-//         return false;
-//       });
-//     }) || cities || [];
-//   };
-
-//   const relevantAreas = getRelevantAreas();
-
-//   return (
-//     <div className="flex-1 relative bg-accent min-h-screen overflow-hidden">
-//       <div className="absolute top-4 left-4 z-10 flex gap-2">
-//         {topControls?.map((control) => {
-//           const IconComponent = control.icon;
-//           return (
-//             <Button
-//               key={control.id}
-//               variant="secondary"
-//               size="sm"
-//               className={cn(
-//                 "gap-2 bg-map-control hover:bg-map-control-hover",
-//                 activeControl === control.id && "bg-map-control-active text-white"
-//               )}
-//               onClick={() => handleControlClick(control.id)}
-//             >
-//               <IconComponent className="h-4 w-4" />
-//               {control.label}
-//             </Button>
-//           );
-//         })}
-//       </div>
-
-//       <div className="absolute top-4 right-4 z-10 flex flex-col gap-1">
-//         {mapTools?.map((tool) => (
-//           <Button
-//             key={tool.id}
-//             variant="secondary"
-//             size="sm"
-//             className={cn(
-//               "w-10 h-10 p-0 bg-map-control hover:bg-map-control-hover bg-[#04003A]",
-//               activeControl === tool.id && "bg-map-control-active text-white"
-//             )}
-//             onClick={() => setActiveControl(activeControl === tool.id ? null : tool.id)}
-//           >
-//             <div className="w-6 h-6 mx-auto">
-//               <img
-//                 src={tool.icon}
-//                 alt={tool.id}
-//                 className="w-full h-full object-contain"
-//               />
-//             </div>
-//           </Button>
-//         ))}
-//       </div>
-
-//       {selectedArea && (
-//         <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
-//           <div className="flex justify-between items-start mb-4">
-//             <h3 className="text-lg font-semibold text-gray-900">
-//               {selectedArea.name || "Area Details"}
-//             </h3>
-//             <Button
-//               variant="ghost"
-//               size="sm"
-//               className="h-6 w-6 p-0 hover:bg-gray-100"
-//               onClick={() => setShowDetailsPanel(false)}
-//             >
-//               ×
-//             </Button>
-//           </div>
-          
-//           <div className="space-y-4">
-//             <div>
-//               <h4 className="font-semibold text-sm text-gray-600 uppercase tracking-wide mb-1">
-//                 Description
-//               </h4>
-//               <p className="text-gray-900 text-sm">
-//                 {selectedArea.description || "No description available"}
-//               </p>
-//             </div>
-            
-//             <div>
-//               <h4 className="font-semibold text-sm text-gray-600 uppercase tracking-wide mb-1">
-//                 Area Type
-//               </h4>
-//               <p className="text-gray-900 text-sm capitalize">
-//                 {getAreaType(selectedArea.area)}
-//               </p>
-//             </div>
-            
-//             {selectedArea.lat && selectedArea.longi && (
-//               <div>
-//                 <h4 className="font-semibold text-sm text-gray-600 uppercase tracking-wide mb-1">
-//                   Coordinates
-//                 </h4>
-//                 <p className="text-gray-900 text-sm">
-//                   Lat: {selectedArea.lat}, Lng: {selectedArea.longi}
-//                 </p>
-//               </div>
-//             )}
-            
-//             {selectedArea.radius && (
-//               <div>
-//                 <h4 className="font-semibold text-sm text-gray-600 uppercase tracking-wide mb-1">
-//                   Radius
-//                 </h4>
-//                 <p className="text-gray-900 text-sm">
-//                   {selectedArea.radius} meters
-//                 </p>
-//               </div>
-//             )}
-//           </div>
-//         </div>
-//       )}
-
-//       <div className="w-full h-screen">
-//         <LoadScript googleMapsApiKey={API_KEY}>
-//           <GoogleMap
-//             mapTypeId="satellite"
-//             mapContainerStyle={containerStyle}
-//             center={center}
-//             zoom={zoom}
-//             onLoad={(map: any) => (mapRef.current = map)}
-//             onClick={handleMapClick}
-//           >
-//             {relevantAreas.map((area, idx) => {
-//               const areaType = getAreaType(area.area);
-              
-//               if (areaType === 'polygon') {
-//                 const path = parsePolygon(area.area);
-//                 return (
-//                   <Polygon
-//                     key={`polygon-${idx}`}
-//                     paths={path}
-//                     options={{
-//                       fillColor: selectedArea === area ? "#00FF00" : "#FF0000",
-//                       fillOpacity: selectedArea === area ? 0.4 : 0.3,
-//                       strokeColor: selectedArea === area ? "#00FF00" : "#FF0000",
-//                       strokeOpacity: 0.8,
-//                       strokeWeight: selectedArea === area ? 3 : 2,
-//                       clickable: true,
-//                     }}
-//                     onClick={() => handleAreaSelect(area)}
-//                   />
-//                 );
-//               } else if (areaType === 'circle') {
-//                 const circleData = parseCircle(area.area);
-//                 if (circleData) {
-//                   return (
-//                     <Circle
-//                       key={`circle-${idx}`}
-//                       center={circleData.center}
-//                       radius={circleData.radius}
-//                       options={{
-//                         fillColor: selectedArea === area ? "#00FF00" : "#0066FF",
-//                         fillOpacity: selectedArea === area ? 0.4 : 0.2,
-//                         strokeColor: selectedArea === area ? "#00FF00" : "#0066FF",
-//                         strokeOpacity: 0.8,
-//                         strokeWeight: selectedArea === area ? 3 : 2,
-//                         clickable: true,
-//                       }}
-//                       onClick={() => handleAreaSelect(area)}
-//                     />
-//                   );
-//                 }
-//               }
-              
-//               return null;
-//             })}
-
-//             {selectedItems.map((item, idx) => {
-//               const lat = parseFloat(item.lat || "0");
-//               const lng = parseFloat(item.longi || "0");
-              
-//               return (
-//                 <React.Fragment key={`item-${idx}`}>
-//                   <Marker
-//                     position={{ lat, lng }}
-//                     title={item?.name || "Location"}
-//                     onClick={() => handleAreaSelect(item)}
-//                   />
-                  
-//                   {item.radius && (
-//                     <Circle
-//                       center={{ lat, lng }}
-//                       radius={parseFloat(item.radius) || 1000}
-//                       options={{
-//                         fillColor: selectedArea === item ? "#FFFF00" : "#0066FF",
-//                         fillOpacity: selectedArea === item ? 0.3 : 0.2,
-//                         strokeColor: selectedArea === item ? "#FFFF00" : "#0066FF",
-//                         strokeOpacity: 0.8,
-//                         strokeWeight: selectedArea === item ? 3 : 2,
-//                         clickable: true,
-//                       }}
-//                       onClick={() => handleAreaSelect(item)}
-//                     />
-//                   )}
-//                 </React.Fragment>
-//               );
-//             })}
-//           </GoogleMap>
-//         </LoadScript>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default MapView;
-
-
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { BarChart3, FileText, MapPin, Info, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -339,6 +16,7 @@ interface MapViewProps {
   moreItem: any;
   selectedItems: any[];
   onNavigate?: (page: string) => void;
+  onProcessUpdate: any;
 }
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -348,36 +26,7 @@ const containerStyle = {
   height: "100%",
 };
 
-const parsePolygon = (wkt: string) => {
-  const coords = wkt.replace("POLYGON((", "").replace("))", "").split(",");
-  return coords.map((c) => {
-    const [lat, lng] = c.trim().split(" ").map(Number);
-    return { lat, lng };
-  });
-};
-
-const parseCircle = (wkt: string) => {
-  const match = wkt.match(/CIRCLE\(\(([^)]+)\)\)/);
-  if (match) {
-    const [lat, lng, radius] = match[1].split(" ").map(Number);
-    return { center: { lat, lng }, radius };
-  }
-  return null;
-};
-
-const getPolygonCenter = (path: { lat: number; lng: number }[]) => {
-  const bounds = new google.maps.LatLngBounds();
-  path.forEach(point => bounds.extend(point));
-  return bounds.getCenter().toJSON();
-};
-
-const getAreaType = (area: string) => {
-  if (area?.startsWith('POLYGON')) return 'polygon';
-  if (area?.startsWith('CIRCLE')) return 'circle';
-  return 'unknown';
-};
-
-const MapView = ({ cities, moreItem, selectedItems, onNavigate }: MapViewProps) => {
+const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate }: MapViewProps) => {
   const [activeControl, setActiveControl] = useState<string | null>(null);
   const [center] = useState({ lat: 30.3384, lng: 71.2781 });
   const [zoom, setZoom] = useState(15);
@@ -387,6 +36,25 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate }: MapViewProps) 
   const [showModal, setShowModal] = useState(false);
   const session = AuthController.getSession();
   const { isAdding, handlePostMessage } = useGeoFence();
+
+  const getCarIcon = () => {
+    if (typeof window !== 'undefined' && window.google) {
+      return {
+        url: 'data:image/svg+xml;base64,' + btoa(`
+          <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+            <g fill="#FF4444" stroke="#000" stroke-width="1">
+              <path d="M6 20h2c0 1.1.9 2 2 2s2-.9 2-2h8c0 1.1.9 2 2 2s2-.9 2-2h2c1.1 0 2-.9 2-2v-6l-3-3h-3V7c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2z"/>
+              <circle cx="10" cy="20" r="2"/>
+              <circle cx="22" cy="20" r="2"/>
+            </g>
+          </svg>
+        `),
+        scaledSize: new window.google.maps.Size(32, 32),
+        anchor: new window.google.maps.Point(16, 16),
+      };
+    }
+    return undefined;
+  };
 
   const initialValues = {
     ID: moreItem?.ID ?? "",
@@ -412,6 +80,9 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate }: MapViewProps) 
         };
         console.log("Form submitted:", payload);
         await handlePostMessage(payload);
+        if (payload.ID) {
+          onProcessUpdate(payload.ID, "1");
+        }
         resetForm();
         setShowModal(false);
       }catch(error){
@@ -446,121 +117,100 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate }: MapViewProps) 
     }
   };
 
-  const handleAreaSelect = (area: any) => {
-    setSelectedArea(area);
-    setShowDetailsPanel(true);
-  };
-
   const handleMapClick = () => {
     setShowDetailsPanel(false);
     setSelectedArea(null);
   };
 
-  const getRelevantAreas = () => {
-    if (!selectedItems.length) return cities || [];
-    
-    return cities?.filter(city => {
-      return selectedItems.some(item => {
-        const itemLat = parseFloat(item.lat || "0");
-        const itemLng = parseFloat(item.longi || "0");
-        
-        const areaType = getAreaType(city.area);
-        
-        if (areaType === 'polygon') {
-          const cityPath = parsePolygon(city.area);
-          const cityCenter = getPolygonCenter(cityPath);
-          const distance = Math.sqrt(
-            Math.pow(itemLat - cityCenter.lat, 2) + 
-            Math.pow(itemLng - cityCenter.lng, 2)
-          );
-          return distance < 0.01;
-        } else if (areaType === 'circle') {
-          const circleData = parseCircle(city.area);
-          if (circleData) {
-            const distance = Math.sqrt(
-              Math.pow(itemLat - circleData.center.lat, 2) + 
-              Math.pow(itemLng - circleData.center.lng, 2)
-            );
-            return distance < 0.01;
-          }
-        }
-        
-        return false;
-      });
-    }) || cities || [];
-  };
+  const formatVehicleInfoContent = (item: any) => {
+    const getIgnitionStatus = (ignition: string) => {
+      return ignition === "1" ? "On" : "Off";
+    };
 
-  const relevantAreas = getRelevantAreas();
-
-  const formatInfoWindowContent = (item: any) => {
-    const formatDate = (dateString: string) => {
-      if (!dateString) return "";
-      try {
-        return new Date(dateString).toLocaleString();
-      } catch {
-        return dateString;
-      }
+    const getSpeedColor = (speed: string) => {
+      const speedNum = parseFloat(speed);
+      if (speedNum > 80) return "text-red-600";
+      if (speedNum > 50) return "text-orange-600";
+      return "text-green-600";
     };
 
     return (
-      <div className="p-2 min-w-[200px] max-w-[300px]">
+      <div className="p-3 min-w-[250px] max-w-[350px] bg-white rounded-lg shadow-lg">
         <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="font-medium text-gray-600">Object:</span>
-            <span className="text-gray-900">{item.object || item.name || 'N/A'}</span>
+          <div className="border-b pb-2 mb-2">
+            <h3 className="font-bold text-lg text-blue-900">{item.vehicle || 'Vehicle'}</h3>
           </div>
           
-          {item.event && (
-            <div className="flex justify-between">
-              <span className="font-medium text-gray-600">Event:</span>
-              <span className="text-gray-900">{item.event}</span>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <span className="font-medium text-gray-600">IMEI:</span>
+              <div className="text-gray-900 text-xs">{item.imei}</div>
             </div>
-          )}
-          
-          {item.address && (
-            <div className="flex justify-between">
-              <span className="font-medium text-gray-600">Address:</span>
-              <span className="text-gray-900 text-right ml-2">{item.address}</span>
+            
+            <div>
+              <span className="font-medium text-gray-600">Model:</span>
+              <div className="text-gray-900">{item.model}</div>
             </div>
-          )}
+          </div>
           
-          {item.altitude && (
-            <div className="flex justify-between">
-              <span className="font-medium text-gray-600">Altitude:</span>
-              <span className="text-gray-900">{item.altitude} m</span>
-            </div>
-          )}
-          
-          {item.angle && (
-            <div className="flex justify-between">
-              <span className="font-medium text-gray-600">Angle:</span>
-              <span className="text-gray-900">{item.angle}°</span>
-            </div>
-          )}
-          
-          {item.speed && (
-            <div className="flex justify-between">
+          <div className="grid grid-cols-2 gap-2">
+            <div>
               <span className="font-medium text-gray-600">Speed:</span>
-              <span className="text-gray-900">{item.speed} km/h</span>
+              <div className={`font-semibold ${getSpeedColor(item.speed)}`}>
+                {item.speed} km/h
+              </div>
             </div>
-          )}
-          
-          {item.time && (
-            <div className="flex justify-between">
-              <span className="font-medium text-gray-600">Time:</span>
-              <span className="text-gray-900 text-right ml-2">{formatDate(item.time)}</span>
+            
+            <div>
+              <span className="font-medium text-gray-600">Ignition:</span>
+              <div className={`font-semibold ${item.ignition === "1" ? "text-green-600" : "text-red-600"}`}>
+                {getIgnitionStatus(item.ignition)}
+              </div>
             </div>
-          )}
-          
-          {item.timestamp && (
-            <div className="flex justify-between">
-              <span className="font-medium text-gray-600">Timestamp:</span>
-              <span className="text-gray-900 text-right ml-2">{formatDate(item.timestamp)}</span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <span className="font-medium text-gray-600">Course:</span>
+              <div className="text-gray-900">{item.course}°</div>
+            </div>
+            
+            <div>
+              <span className="font-medium text-gray-600">Device ID:</span>
+              <div className="text-gray-900">{item.deviceid}</div>
+            </div>
+          </div>
+
+          <div>
+            <span className="font-medium text-gray-600">Position:</span>
+            <div className="text-gray-900 text-xs">
+              Lat: {item.lat}, Lng: {item.longi}
+            </div>
+            <div className="text-xs text-gray-500">Position ID: {item.positionid}</div>
+          </div>
+
+          {item.contact && (
+            <div>
+              <span className="font-medium text-gray-600">Contact:</span>
+              <div className="text-gray-900 text-xs">{item.contact}</div>
             </div>
           )}
         </div>
       </div>
     );
+  };
+
+  const createSurroundingArea = (item: any) => {
+    const lat = parseFloat(item.lat || "0");
+    const lng = parseFloat(item.longi || "0");
+    const speed = parseFloat(item.speed || "0");
+    const baseRadius = 500;
+    const speedMultiplier = Math.max(1, speed / 50);
+    const radius = baseRadius * speedMultiplier;
+    return {
+      center: { lat, lng },
+      radius: radius
+    };
   };
 
   return (
@@ -672,79 +322,41 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate }: MapViewProps) 
             zoom={zoom}
             onLoad={(map: any) => (mapRef.current = map)}
             onClick={handleMapClick}
+            options={{
+              zoomControl: false,
+              mapTypeControl: false,
+              scaleControl: false,
+              rotateControl: false,
+              fullscreenControl: false,
+              gestureHandling: 'greedy'
+            }}
           >
-            {relevantAreas.map((area, idx) => {
-              const areaType = getAreaType(area.area);
-              
-              if (areaType === 'polygon') {
-                const path = parsePolygon(area.area);
-                return (
-                  <Polygon
-                    key={`polygon-${idx}`}
-                    paths={path}
-                    options={{
-                      fillColor: selectedArea === area ? "#00FF00" : "#FF0000",
-                      fillOpacity: selectedArea === area ? 0.4 : 0.3,
-                      strokeColor: selectedArea === area ? "#00FF00" : "#FF0000",
-                      strokeOpacity: 0.8,
-                      strokeWeight: selectedArea === area ? 3 : 2,
-                      clickable: true,
-                    }}
-                    onClick={() => handleAreaSelect(area)}
-                  />
-                );
-              } else if (areaType === 'circle') {
-                const circleData = parseCircle(area.area);
-                if (circleData) {
-                  return (
-                    <Circle
-                      key={`circle-${idx}`}
-                      center={circleData.center}
-                      radius={circleData.radius}
-                      options={{
-                        fillColor: selectedArea === area ? "#00FF00" : "#0066FF",
-                        fillOpacity: selectedArea === area ? 0.4 : 0.2,
-                        strokeColor: selectedArea === area ? "#00FF00" : "#0066FF",
-                        strokeOpacity: 0.8,
-                        strokeWeight: selectedArea === area ? 3 : 2,
-                        clickable: true,
-                      }}
-                      onClick={() => handleAreaSelect(area)}
-                    />
-                  );
-                }
-              }
-              return null;
-            })}
-
             {selectedItems.map((item, idx) => {
               const lat = parseFloat(item.lat || "0");
               const lng = parseFloat(item.longi || "0");
+              const surroundingArea = createSurroundingArea(item);
               
               return (
-                <React.Fragment key={`item-${idx}`}>
-                  <Marker position={{ lat, lng }} title={item?.name || "Location"} />
-                  <InfoWindow position={{ lat, lng }}  options={{ disableAutoPan: false, pixelOffset: new google.maps.Size(0, -40) }}>
+                <React.Fragment key={`vehicle-${item.positionid || idx}`}>
+                  <Circle center={surroundingArea.center} radius={surroundingArea.radius}
+                    options={{
+                      fillColor: item.ignition === "1" ? "#00FF00" : "#FFA500",
+                      fillOpacity: 0.15,
+                      strokeColor: item.ignition === "1" ? "#00AA00" : "#FF8C00",
+                      strokeOpacity: 0.6,
+                      strokeWeight: 2,
+                      clickable: false,
+                    }}
+                  />
+                  <Marker  position={{ lat, lng }}  title={`${item.vehicle || 'Vehicle'} - Speed: ${item.speed} km/h`}
+                    icon={getCarIcon()} animation={item.ignition === "1" ? google.maps.Animation.BOUNCE : undefined}
+                  />
+                  <InfoWindow  position={{ lat: lat + 0.0008, lng }}
+                    options={{  disableAutoPan: false,  pixelOffset: new google.maps.Size(0, -10), maxWidth: 350, }}>
                     <div>
-                      {formatInfoWindowContent(item)}
+                      {formatVehicleInfoContent(item)}
                     </div>
                   </InfoWindow>
-                  
-                  {item.radius && (
-                    <Circle
-                      center={{ lat, lng }}
-                      radius={parseFloat(item.radius) || 1000}
-                      options={{
-                        fillColor: selectedArea === item ? "#FFFF00" : "#0066FF",
-                        fillOpacity: selectedArea === item ? 0.3 : 0.2,
-                        strokeColor: selectedArea === item ? "#FFFF00" : "#0066FF",
-                        strokeOpacity: 0.8,
-                        strokeWeight: selectedArea === item ? 3 : 2,
-                        clickable: true,
-                      }}
-                      onClick={() => handleAreaSelect(item)}
-                    />
-                  )}
                 </React.Fragment>
               );
             })}

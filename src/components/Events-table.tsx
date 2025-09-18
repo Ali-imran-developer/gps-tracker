@@ -44,14 +44,8 @@ const EventsTable = ({ eventsLoader, eventsData, geoFenceData, onSelectionChange
   return (
     <div className="w-full max-w-md mx-auto border rounded-md shadow-sm bg-white font-sans text-xs">
       <div className="max-h-[70vh] overflow-y-auto divide-y">
-        {eventsLoader ? (
-          <div className="flex justify-center items-center py-10">
-            <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
-            <span className="ml-2 text-gray-600 text-sm">Loading events...</span>
-          </div>
-        ) : (
-          mergedData?.map((item: any, index: number) => {
-            const rowKey = getRowKey(item, index); // unique per row
+        {(mergedData?.map((item: any, index: number) => {
+            const rowKey = getRowKey(item, index);
             const isExpanded = expandedRows.includes(rowKey);
             const isChecked = selectedItems.includes(rowKey);
             const disabled = !item?.lat || !item?.longi;

@@ -17,6 +17,26 @@ const GPSTracker = () => {
   const [moreItem, setMoreItem] = useState<any | null>(null);
   const [page, setPage] = useState(1);
   const totalPages = 50;
+  const [localEvents, setLocalEvents] = useState<any[]>([]);
+
+  const updateEventProcess = (id: string, process: "0" | "1") => {
+    setLocalEvents((prev) => {
+      const exists = prev.find((e) => e.ID === id);
+      if (exists) {
+        return prev.map((e) => e.ID === id ? { ...e, process } : e);
+      }
+      const event = eventsData.find((e: any) => e.ID === id);
+      if (event) {
+        return [...prev, { ...event, process }];
+      }
+      return prev;
+    });
+  };
+
+  const mergedEvents = eventsData?.map((e: any) => {
+    const override = localEvents.find((o) => o.ID === e.ID);
+    return override ? { ...e, ...override } : e;
+  });
 
   const handleSelectionChange = (selected: any[]) => {
     setSelectedItems(selected);
@@ -27,16 +47,31 @@ const GPSTracker = () => {
     password: session?.credentials?.pass ?? "",
   };
 
-  const initialParams = {
-    page: 1,
-    userid: session?.user?.id,
-  };
+  useEffect(() => {
+    // handleGetEventsData({ page, userid: session?.user?.id });
+    handleCheckalldevices(queryParams);
+    // handleGetTrackLocations(queryParams);
+  }, [page]);
 
   useEffect(() => {
-    handleGetEventsData({ page, userid: session?.user?.id });
-    handleCheckalldevices(queryParams);
-    handleGetTrackLocations(queryParams);
-  }, [page]);
+    let isMounted = true;
+    const fetchData = async () => {
+      if (!session?.user) return;
+      const eventsResponse = await handleGetEventsData({ page, userid: session.user.id });
+      const trackResponse = await handleGetTrackLocations(queryParams);
+      // optional optimization: only update if data changed
+      // if (!isEqual(eventsResponse, eventsData)) dispatch(setEventsData(eventsResponse));
+      // if (!isEqual(trackResponse, trackLocations)) dispatch(setTrackLocations(trackResponse));
+    };
+    fetchData();
+    const interval = setInterval(() => {
+      fetchData();
+    }, 20000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [page, session?.user?.id]);
 
   const handlePrevious = () => {
     setPage((prev) => Math.max(prev - 1, 1));
@@ -68,25 +103,11 @@ const GPSTracker = () => {
     <div className="h-screen flex flex-col bg-background">
       <Header />
       <div className="flex-1 flex overflow-y-auto">
-        <Sidebar
-          loader={isLoading}
-          geoFenceData={geoFenceData}
-          trackLocations={trackLocations}
-          eventsData={eventsData}
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          onSelectionChange={handleSelectionChange}
-          page={page}
-          totalPages={totalPages}
-          handleNext={handleNext}
-          handlePrevious={handlePrevious}
-          onMoreClick={setMoreItem}
+        <Sidebar loader={isLoading} geoFenceData={geoFenceData} trackLocations={trackLocations} eventsData={mergedEvents} activeTab={activeTab}
+          onTabChange={handleTabChange} onSelectionChange={handleSelectionChange} page={page} totalPages={totalPages} handleNext={handleNext} handlePrevious={handlePrevious} onMoreClick={setMoreItem}
         />
-        <MapView 
-          cities={cities}
-          moreItem={moreItem}
-          selectedItems={selectedItems} 
-          onNavigate={handleNavigation} 
+        <MapView cities={cities} moreItem={moreItem} selectedItems={selectedItems} 
+          onNavigate={handleNavigation} onProcessUpdate={updateEventProcess}
         />
       </div>
     </div>
