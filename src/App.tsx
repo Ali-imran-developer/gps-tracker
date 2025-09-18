@@ -5,10 +5,18 @@ import Login from "./pages/Login";
 import AuthController from "./controllers/authController";
 
 const ProtectedRoute = ({ children }) => {
-  // const session = AuthController.getSession();
-  // if (!session || !session.user) {
-  //   return <Navigate to="/login" replace />;
-  // }
+  const session = AuthController.getSession();
+  if (!session || !session.user) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+};
+
+const PublicRoute = ({ children }) => {
+  const session = AuthController.getSession();
+  if (session && session.user) {
+    return <Navigate to="/" replace />;
+  }
   return children;
 };
 
@@ -17,13 +25,8 @@ const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={
-            <ProtectedRoute>
-              <Index />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/login" element={<Login />} />
+        <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>

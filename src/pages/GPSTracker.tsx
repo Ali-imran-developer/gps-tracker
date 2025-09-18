@@ -10,20 +10,41 @@ import AuthController from "@/controllers/authController";
 const GPSTracker = () => {
   const [currentPage, setCurrentPage] = useState<"main" | "dashboard">("main");
   const [activeTab, setActiveTab] = useState("Objects");
-  const { isLoading, handleCheckalldevices, handleGetTrackLocations, handleGetCookie } = useGeoFence();
-  const { geoFenceData, trackLocations } = useSelector( (state: any) => state.GeoFence );
+  const { cities, isLoading, handleCheckalldevices, handleGetTrackLocations, handleGetEventsData, handleGeofenceCities } = useGeoFence();
+  const { geoFenceData, trackLocations, eventsData } = useSelector((state: any) => state.GeoFence);
   const session = AuthController.getSession();
+  const [selectedItems, setSelectedItems] = useState<any[]>([]);
+  const [moreItem, setMoreItem] = useState<any | null>(null);
+  const [page, setPage] = useState(1);
+  const totalPages = 50;
+
+  const handleSelectionChange = (selected: any[]) => {
+    setSelectedItems(selected);
+  };
+
+  const queryParams = {
+    username: session?.credentials?.user ?? "",
+    password: session?.credentials?.pass ?? "",
+  };
+
+  const initialParams = {
+    page: 1,
+    userid: session?.user?.id,
+  };
 
   useEffect(() => {
-    const queryParams = {
-      username: session?.credentials?.user ?? "",
-      password: session?.credentials?.pass ?? "",
-    };
-
-    handleGetCookie(queryParams);
+    handleGetEventsData({ page, userid: session?.user?.id });
     handleCheckalldevices(queryParams);
     handleGetTrackLocations(queryParams);
-  }, []);
+  }, [page]);
+
+  const handlePrevious = () => {
+    setPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleNext = () => {
+    setPage((prev) => Math.min(prev + 1, totalPages));
+  };
 
   const handleNavigation = (page: "main" | "dashboard") => {
     setCurrentPage(page);
@@ -37,12 +58,36 @@ const GPSTracker = () => {
     return <Dashboard onNavigate={handleNavigation} />;
   }
 
+  useEffect(() => {
+    if(selectedItems?.[0]?.geofenceid){
+      handleGeofenceCities(selectedItems?.[0]?.geofenceid);
+    }
+  }, [selectedItems]);
+
   return (
     <div className="h-screen flex flex-col bg-background">
       <Header />
       <div className="flex-1 flex overflow-y-auto">
-        <Sidebar activeTab={activeTab} onTabChange={handleTabChange}  />
-        <MapView onNavigate={handleNavigation} />
+        <Sidebar
+          loader={isLoading}
+          geoFenceData={geoFenceData}
+          trackLocations={trackLocations}
+          eventsData={eventsData}
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          onSelectionChange={handleSelectionChange}
+          page={page}
+          totalPages={totalPages}
+          handleNext={handleNext}
+          handlePrevious={handlePrevious}
+          onMoreClick={setMoreItem}
+        />
+        <MapView 
+          cities={cities}
+          moreItem={moreItem}
+          selectedItems={selectedItems} 
+          onNavigate={handleNavigation} 
+        />
       </div>
     </div>
   );

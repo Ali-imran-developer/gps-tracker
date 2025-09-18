@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -7,11 +7,34 @@ import ObjectsTable from "./Objects-table";
 import EventsTable from "./Events-table";
 
 interface SidebarProps {
+  loader: boolean;
+  geoFenceData: any;
+  trackLocations: any;
+  eventsData: any;
   activeTab?: string;
   onTabChange?: (tab: string) => void;
+  onSelectionChange?: (selected: any[]) => void;
+  page: number;
+  totalPages: number;
+  handleNext: () => void;
+  handlePrevious: () => void;
+  onMoreClick: (val: any) => void;
 }
 
-const Sidebar = ({ activeTab = "Objects", onTabChange }: SidebarProps) => {
+const Sidebar = ({
+  loader,
+  geoFenceData,
+  trackLocations,
+  eventsData,
+  activeTab = "Objects",
+  onTabChange,
+  onSelectionChange,
+  page,
+  totalPages,
+  handleNext,
+  handlePrevious,
+  onMoreClick,
+}: SidebarProps) => {
   const [selectedTab, setSelectedTab] = useState(activeTab);
   const tabs = ["Objects", "Events", "Places", "History"];
 
@@ -24,9 +47,16 @@ const Sidebar = ({ activeTab = "Objects", onTabChange }: SidebarProps) => {
     <div className="w-80 bg-card border-r border-border flex flex-col h-full">
       <div className="flex border-b border-border bg-[#D9D9D9]">
         {tabs?.map((tab) => (
-          <button key={tab} onClick={() => handleTabClick(tab)}
-            className={cn("flex-1 px-4 py-3 text-sm font-medium transition-colors",
-            selectedTab === tab ? "text-[#444444] border-b-2 border-primary bg-white" : "text-muted-foreground hover:text-foreground hover:bg-accent")}>
+          <button
+            key={tab}
+            onClick={() => handleTabClick(tab)}
+            className={cn(
+              "flex-1 px-4 py-3 text-sm font-medium transition-colors",
+              selectedTab === tab
+                ? "text-[#444444] border-b-2 border-primary bg-white"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent"
+            )}
+          >
             {tab}
           </button>
         ))}
@@ -38,60 +68,60 @@ const Sidebar = ({ activeTab = "Objects", onTabChange }: SidebarProps) => {
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search" className="pl-9 bg-[#04003A] placeholder:text-gray-300 rounded-none" />
+                <Input
+                  placeholder="Search"
+                  className="pl-9 bg-[#04003A] placeholder:text-gray-300 rounded-none"
+                />
               </div>
             </div>
             <div className="flex items-center gap-1">
-              <Button variant="outline" className="bg-[#04003A] rounded-none" size="sm">
+              <Button
+                variant="outline"
+                className="bg-[#04003A] rounded-none"
+                size="sm"
+              >
                 <div className="max-w-28">
-                  <img src="/assets/icons/refresh.png" alt="refresh Icon" className="w-full h-full object-contain" />
+                  <img
+                    src="/assets/icons/refresh.png"
+                    alt="refresh Icon"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
               </Button>
-              <Button variant="outline" className="bg-[#04003A] rounded-none" size="sm">
+              <Button
+                variant="outline"
+                className="bg-[#04003A] rounded-none"
+                size="sm"
+              >
                 <div className="max-w-28">
-                  <img src="/assets/icons/sunlight.png" alt="sunlight Icon" className="w-full h-full object-contain" />
+                  <img
+                    src="/assets/icons/sunlight.png"
+                    alt="sunlight Icon"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
               </Button>
-              <Button variant="outline" className="bg-[#04003A] rounded-none" size="sm">
+              <Button
+                variant="outline"
+                className="bg-[#04003A] rounded-none"
+                size="sm"
+              >
                 <div className="max-w-28">
-                  <img src="/assets/icons/plus.png" alt="plus Icon" className="w-full h-full object-contain" />
+                  <img
+                    src="/assets/icons/plus.png"
+                    alt="plus Icon"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
               </Button>
             </div>
           </div>
 
-          <ObjectsTable />
-
-          {/* <div className="px-4 py-2 border-b border-border bg-muted">
-            <div className="flex items-center gap-2">
-              <div className="max-w-28">
-                <img src="/assets/icons/eye.png" alt="eye Icon" className="w-full h-full object-contain" />
-              </div>
-              <div className="max-w-28">
-                <img src="/assets/icons/plus-user.png" alt="plus-user Icon" className="w-full h-full object-contain" />
-              </div>
-              <span className="text-sm font-medium">Objects</span>
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto">
-            {objectsData.map((object) => (
-              <div key={object.id} className="px-4 py-3 border-b border-border hover:bg-accent cursor-pointer transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={cn("w-2 h-2 rounded-full", object.status === "active" && "bg-success", object.status === "idle" && "bg-warning", object.status === "maintenance" && "bg-danger")} />
-                    <div>
-                      <div className="font-medium text-sm">{object.name}</div>
-                      <div className="text-xs text-muted-foreground">{object.user}</div>
-                    </div>
-                  </div>
-                  <div className="text-xs text-muted-foreground capitalize">
-                    {object.status}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div> */}
+          <ObjectsTable
+            objectsLoader={loader}
+            geoFenceData={geoFenceData}
+            trackLocations={trackLocations}
+          />
         </div>
       )}
 
@@ -101,29 +131,81 @@ const Sidebar = ({ activeTab = "Objects", onTabChange }: SidebarProps) => {
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search" className="pl-9 bg-[#04003A] placeholder:text-gray-300 rounded-none" />
+                <Input
+                  placeholder="Search"
+                  className="pl-9 bg-[#04003A] placeholder:text-gray-300 rounded-none"
+                />
               </div>
             </div>
             <div className="flex items-center gap-1">
-              <Button variant="outline" className="bg-[#04003A] rounded-none hover:bg-blue-950" size="sm">
+              <Button
+                variant="outline"
+                className="bg-[#04003A] rounded-none hover:bg-blue-950"
+                size="sm"
+              >
                 <div className="max-w-28">
-                  <img src="/assets/icons/refresh.png" alt="refresh Icon" className="w-full h-full object-contain" />
+                  <img
+                    src="/assets/icons/refresh.png"
+                    alt="refresh Icon"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
               </Button>
-              <Button variant="outline" className="bg-[#04003A] rounded-none hover:bg-blue-950" size="sm">
+              <Button
+                variant="outline"
+                className="bg-[#04003A] rounded-none hover:bg-blue-950"
+                size="sm"
+              >
                 <div className="max-w-28">
-                  <img src="/assets/icons/sunlight.png" alt="sunlight Icon" className="w-full h-full object-contain" />
+                  <img
+                    src="/assets/icons/sunlight.png"
+                    alt="sunlight Icon"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
               </Button>
-              <Button variant="outline" className="bg-[#04003A] rounded-none hover:bg-blue-950" size="sm">
+              <Button
+                variant="outline"
+                className="bg-[#04003A] rounded-none hover:bg-blue-950"
+                size="sm"
+              >
                 <div className="max-w-28">
-                  <img src="/assets/icons/plus.png" alt="plus Icon" className="w-full h-full object-contain" />
+                  <img
+                    src="/assets/icons/plus.png"
+                    alt="plus Icon"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
               </Button>
             </div>
           </div>
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              className="h-7 px-2 text-[10px]"
+              onClick={handlePrevious}
+              disabled={page === 1}
+            >
+              <ChevronLeft className="w-3 h-3" />
+              Previous
+            </Button>
 
-          <EventsTable />
+            <Button
+              className="h-7 px-2 text-[10px] hover:bg-blue-700"
+              onClick={handleNext}
+              disabled={page === totalPages}
+            >
+              Next
+              <ChevronRight className="w-3 h-3" />
+            </Button>
+          </div>
+          <EventsTable
+            eventsLoader={loader}
+            eventsData={eventsData}
+            geoFenceData={geoFenceData}
+            onSelectionChange={onSelectionChange}
+            onMoreClick={onMoreClick}
+          />
         </div>
       )}
 
