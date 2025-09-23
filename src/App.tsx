@@ -3,6 +3,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import AuthController from "./controllers/authController";
+import { MapProvider } from "./config/mapProvider";
 
 const ProtectedRoute = ({ children }) => {
   const session = AuthController.getSession();
@@ -23,13 +24,15 @@ const PublicRoute = ({ children }) => {
 const App = () => {
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
+    <MapProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </MapProvider>
   );
 };
 

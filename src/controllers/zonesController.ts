@@ -15,6 +15,9 @@ class ZonesController {
   static removeZone(deviceId: string | number, geofenceId: string | number) {
     return apiRequest("get", `${geoFenceUrl}/geofence/removegeofence2.php?deviceId=${deviceId}&geofenceId=${geofenceId}`);
   }
+  static addNewZone(name: string | any, description: string | any, area: string | any) {
+    return apiRequest("get", `${geoFenceUrl}/geofence/checkgeoadded.php?name=${name}&description=${description}&area=${area}`);
+  }
 }
 
 export default ZonesController;

@@ -73,9 +73,24 @@ export const useZones = (Id?: string | number) => {
     }
   };
 
+  const handleAddNewZone = async (name: string | any, description: string | any, area: string | any) => {
+    try {
+      setLoadingZones(true);
+      const response: any = await ZonesController.addNewZone(name, description, area);
+      toast.success("Geofence Added successfully");
+      await handleGetAllZones();
+      return response;
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoadingZones(false);
+    }
+  };
+
   return {
     isLoading,
     isLoadingZones,
+    handleAddNewZone,
     handleAttachZone,
     handleDeleteZone,
     handleGetAllZones,

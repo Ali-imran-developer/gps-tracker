@@ -33,7 +33,6 @@ const GPSTracker = () => {
     });
   };
 
-  console.log("selectedItems", selectedItems);
   const mergedEvents = eventsData?.map((e: any) => {
     const override = localEvents.find((o) => o.ID === e.ID);
     return override ? { ...e, ...override } : e;

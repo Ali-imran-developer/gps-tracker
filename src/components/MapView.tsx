@@ -425,25 +425,7 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
         ))}
       </div>
 
-      <div className="w-full h-screen">
-        <LoadScript googleMapsApiKey={API_KEY}>
-          <GoogleMap
-            mapTypeId="roadmap"
-            mapContainerStyle={containerStyle}
-            center={center}
-            zoom={zoom}
-            onLoad={(map: any) => (mapRef.current = map)}
-            onClick={handleMapClick}
-            options={{
-              zoomControl: false,
-              mapTypeControl: false,
-              scaleControl: false,
-              rotateControl: false,
-              fullscreenControl: false,
-              gestureHandling: 'greedy'
-            }}
-          >
-            {/* {selectedItems?.map((zone, idx) => {
+                  {/* {selectedItems?.map((zone, idx) => {
               const path = parseWKT(zone.area);
               if (path.length === 0) return null;
               return (
@@ -460,6 +442,25 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
                 />
               );
             })} */}
+
+      <div className="w-full h-screen">
+        {/* <LoadScript googleMapsApiKey={API_KEY}> */}
+          <GoogleMap
+            mapTypeId="roadmap"
+            mapContainerStyle={containerStyle}
+            center={center}
+            zoom={zoom}
+            onLoad={(map: any) => (mapRef.current = map)}
+            onClick={handleMapClick}
+            options={{
+              zoomControl: false,
+              mapTypeControl: false,
+              scaleControl: false,
+              rotateControl: false,
+              fullscreenControl: false,
+              gestureHandling: 'greedy'
+            }}
+          >
             {selectedItems?.map((item, idx) => {
               const lat = parseFloat(item?.lat || item.latitude || "0");
               const lng = parseFloat(item?.longi || item.longitude || "0");
@@ -490,7 +491,7 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
               );
             })}
           </GoogleMap>
-        </LoadScript>
+        {/* </LoadScript> */}
       </div>
     </div>
   );
