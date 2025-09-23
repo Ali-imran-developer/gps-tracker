@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import { BarChart3, FileText, MapPin, Info, X, Loader2 } from "lucide-react";
+import { BarChart3, FileText, MapPin, Info, X, Loader2, EyeOff, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { GoogleMap, LoadScript, Marker, Polygon, InfoWindow, Circle } from "@react-google-maps/api";
@@ -10,6 +10,7 @@ import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import AuthController from "@/controllers/authController";
 import { useGeoFence } from "@/hooks/geoFecnce-hook";
+import { useSelector } from "react-redux";
 
 interface MapViewProps {
   cities: any[];
@@ -26,6 +27,16 @@ const containerStyle = {
   height: "100%",
 };
 
+function parseWKT(area: string): google.maps.LatLngLiteral[] {
+  if (!area) return [];
+  const match = area.match(/\(\((.*)\)\)/);
+  if (!match) return [];
+  return match[1]
+    .split(",")
+    .map(coord => coord.trim().split(" ").map(Number))
+    .map(([lng, lat]) => ({ lat, lng }));
+}
+
 const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate }: MapViewProps) => {
   const [activeControl, setActiveControl] = useState<string | null>(null);
   const [center] = useState({ lat: 30.3384, lng: 71.2781 });
@@ -35,7 +46,9 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
   const [showDetailsPanel, setShowDetailsPanel] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const session = AuthController.getSession();
-  const { isAdding, handlePostMessage } = useGeoFence();
+  const { isAdding, handlePostMessage, handleGetAddress } = useGeoFence();
+  const { address } = useSelector((state: any) => state.GeoFence);
+  const [showAddress, setShowAddress] = useState(true);
 
   const getCarIcon = () => {
     if (typeof window !== 'undefined' && window.google) {
@@ -99,13 +112,56 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
     }
   }, [moreItem]);
 
+  // useEffect(() => {
+  //   if (selectedItems.length > 0 && mapRef.current) {
+  //     const item = selectedItems[0];
+  //     const rawLat = item?.lat ?? item?.latitude;
+  //     const rawLng = item?.longi ?? item?.longitude;
+  //     const lat = parseFloat(rawLat) || 0;
+  //     const lng = parseFloat(rawLng) || 0;
+  //     if (isFinite(lat) && isFinite(lng)) {
+  //       const newCenter = { lat, lng };
+  //       mapRef.current.panTo(newCenter);
+  //       mapRef.current.setZoom(15);
+  //     } else {
+  //       console.warn("Invalid lat/lng:", rawLat, rawLng, item);
+  //     }
+  //   }
+  // }, [selectedItems]);
+
   useEffect(() => {
     if (selectedItems.length > 0 && mapRef.current) {
-      const lat = parseFloat(selectedItems[0].lat || "0");
-      const lng = parseFloat(selectedItems[0].longi || "0");
-      const newCenter = { lat, lng };
-      mapRef.current.panTo(newCenter);
-      mapRef.current.setZoom(15);
+      // const bounds = new google.maps.LatLngBounds();
+      selectedItems?.map((item) => {
+        const rawLat = item?.lat ?? item?.latitude;
+        const rawLng = item?.longi ?? item?.longitude;
+        const lat = parseFloat(rawLat) || 0;
+        const lng = parseFloat(rawLng) || 0;
+      if (isFinite(lat) && isFinite(lng)) {
+        const newCenter = { lat, lng };
+        mapRef.current.panTo(newCenter);
+        mapRef.current.setZoom(15);
+      } else {
+        console.warn("Invalid lat/lng:", rawLat, rawLng, item);
+      }
+      });
+      // mapRef.current.fitBounds(bounds);
+    }
+  }, [selectedItems]);
+
+  useEffect(() => {
+    if (selectedItems?.length > 0 && mapRef?.current) {
+      const item = selectedItems[0];
+      const rawLat = item?.lat ?? item?.latitude;
+      const rawLng = item?.longi ?? item?.longitude;
+      const deviceId = item?.deviceid ?? item?.deviceId;
+      const queryParams = {
+        lati: rawLat,
+        longi: rawLng,
+        deviceid: deviceId,
+      };
+      handleGetAddress(queryParams);
+      setShowAddress(true);
     }
   }, [selectedItems]);
 
@@ -134,17 +190,29 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
       return "text-green-600";
     };
 
+    const getLat = (item: any) => {
+      if (item.lat) return Number(item.lat).toFixed(6);
+      if (item.latitude) return Number(item.latitude).toFixed(6);
+      return "0.000000";
+    };
+
+    const getLng = (item: any) => {
+      if (item.longi) return Number(item.longi).toFixed(6);
+      if (item.longitude) return Number(item.longitude).toFixed(6);
+      return "0.000000";
+    };
+
     return (
       <div className="p-3 min-w-[250px] max-w-[350px] bg-white rounded-lg shadow-lg">
         <div className="space-y-2 text-sm">
           <div className="border-b pb-2 mb-2">
-            <h3 className="font-bold text-lg text-blue-900">{item.vehicle || 'Vehicle'}</h3>
+            <h3 className="font-bold text-lg text-blue-900">{item?.vehicle || item?.name}</h3>
           </div>
           
           <div className="grid grid-cols-2 gap-2">
             <div>
               <span className="font-medium text-gray-600">IMEI:</span>
-              <div className="text-gray-900 text-xs">{item.imei}</div>
+              <div className="text-gray-900 text-xs">{item?.imei || item?.uniqueId}</div>
             </div>
             
             <div>
@@ -174,43 +242,66 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
               <span className="font-medium text-gray-600">Course:</span>
               <div className="text-gray-900">{item.course}°</div>
             </div>
-            
-            <div>
-              <span className="font-medium text-gray-600">Device ID:</span>
-              <div className="text-gray-900">{item.deviceid}</div>
-            </div>
+            {item.contact && (
+              <div>
+                <span className="font-medium text-gray-600">Contact:</span>
+                <div className="text-gray-900 text-xs">{item?.phone}</div>
+              </div>
+            )}
           </div>
 
           <div>
             <span className="font-medium text-gray-600">Position:</span>
             <div className="text-gray-900 text-xs">
-              Lat: {item.lat}, Lng: {item.longi}
+              Lat: {getLat(item)}, Lng: {getLng(item)}
             </div>
-            <div className="text-xs text-gray-500">Position ID: {item.positionid}</div>
           </div>
-
-          {item.contact && (
-            <div>
-              <span className="font-medium text-gray-600">Contact:</span>
-              <div className="text-gray-900 text-xs">{item.contact}</div>
-            </div>
-          )}
         </div>
       </div>
     );
   };
 
   const createSurroundingArea = (item: any) => {
-    const lat = parseFloat(item.lat || "0");
-    const lng = parseFloat(item.longi || "0");
-    const speed = parseFloat(item.speed || "0");
+    const lat = parseFloat(item.lat ?? item.latitude ?? "0");
+    const lng = parseFloat(item.longi ?? item.longitude ?? "0");
+    const speed = parseFloat(item.speed ?? "0");
     const baseRadius = 500;
     const speedMultiplier = Math.max(1, speed / 50);
     const radius = baseRadius * speedMultiplier;
     return {
       center: { lat, lng },
-      radius: radius
+      radius,
     };
+  };
+
+  const formatDate = (fullAddress: string) => {
+    if (!fullAddress) return "";
+    const [location, rawDate] = fullAddress.split("^");
+    if (!rawDate) return fullAddress;
+    const cleanedDate = rawDate.trim().replace(/\s+/g, " "); 
+    const fixedDate = cleanedDate.replace(/(\d{2}):\s*(\d{2}):\s*(\d{2})/, "$1:$2:$3"); 
+    const date = new Date(fixedDate.replace(" ", "T"));
+    if (isNaN(date.getTime())) {
+      return fullAddress;
+    }
+    const formattedDate = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Karachi",
+      dateStyle: "short",
+      timeStyle: "medium",
+    }).format(date);
+    return `${location.trim()} | ${formattedDate}`;
+  };
+
+  const renderInfoContent = (item: any, multiple: boolean) => {
+    if (multiple) {
+      return (
+        <div className="p-0">
+          <strong className="font-semibold text-[11px]">{item.vehicle || item.name}</strong>  
+          <span className="ml-2">({item?.speed}Kph)</span>
+        </div>
+      );
+    }
+    return formatVehicleInfoContent(item);
   };
 
   return (
@@ -269,6 +360,28 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
         </div>
       )}
 
+      {selectedItems?.length > 0 && address && showAddress && (
+        <div className="absolute bottom-[56px] left-1/2 -translate-x-1/2 z-50">
+          <div className="flex items-center justify-between bg-[#04003A] text-white px-4 py-2 rounded-md">
+            {showAddress ? (
+              <p className="text-sm truncate">{formatDate(address)}</p>
+            ) : (
+              <p className="text-sm italic text-gray-400">Address hidden</p>
+            )}
+            <button
+              onClick={() => setShowAddress((prev) => !prev)}
+              className="ml-3"
+            >
+              {showAddress ? (
+                <EyeOff className="w-5 h-5" />
+              ) : (
+                <Eye className="w-5 h-5" />
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="absolute top-4 left-4 z-10 flex gap-2">
         {topControls?.map((control) => {
           const IconComponent = control.icon;
@@ -296,13 +409,12 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
             key={tool.id}
             variant="secondary"
             size="sm"
-            className={cn(
-              "w-10 h-10 p-0 bg-map-control hover:bg-map-control-hover bg-[#04003A]",
+            className={cn("w-8 h-8 p-0 bg-map-control hover:bg-map-control-hover bg-[#04003A]",
               activeControl === tool.id && "bg-map-control-active text-white"
             )}
             onClick={() => setActiveControl(activeControl === tool.id ? null : tool.id)}
           >
-            <div className="w-6 h-6 mx-auto">
+            <div className="w-4 h-4 mx-auto">
               <img
                 src={tool.icon}
                 alt={tool.id}
@@ -316,7 +428,7 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
       <div className="w-full h-screen">
         <LoadScript googleMapsApiKey={API_KEY}>
           <GoogleMap
-            mapTypeId="satellite"
+            mapTypeId="roadmap"
             mapContainerStyle={containerStyle}
             center={center}
             zoom={zoom}
@@ -331,9 +443,26 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
               gestureHandling: 'greedy'
             }}
           >
-            {selectedItems.map((item, idx) => {
-              const lat = parseFloat(item.lat || "0");
-              const lng = parseFloat(item.longi || "0");
+            {/* {selectedItems?.map((zone, idx) => {
+              const path = parseWKT(zone.area);
+              if (path.length === 0) return null;
+              return (
+                <Polygon
+                  key={`zone-${zone.id}-${idx}`}
+                  paths={parseWKT(zone.area)}
+                  options={{
+                    fillColor: "#4285F4",
+                    fillOpacity: 0.15,
+                    strokeColor: "#4285F4",
+                    strokeOpacity: 0.6,
+                    strokeWeight: 2,
+                  }}
+                />
+              );
+            })} */}
+            {selectedItems?.map((item, idx) => {
+              const lat = parseFloat(item?.lat || item.latitude || "0");
+              const lng = parseFloat(item?.longi || item.longitude || "0");
               const surroundingArea = createSurroundingArea(item);
               
               return (
@@ -353,8 +482,8 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
                   />
                   <InfoWindow  position={{ lat: lat + 0.0008, lng }}
                     options={{  disableAutoPan: false,  pixelOffset: new google.maps.Size(0, -10), maxWidth: 350, }}>
-                    <div>
-                      {formatVehicleInfoContent(item)}
+                    <div className="custom-info-window p-0">
+                      {renderInfoContent(item, selectedItems.length > 1)}
                     </div>
                   </InfoWindow>
                 </React.Fragment>

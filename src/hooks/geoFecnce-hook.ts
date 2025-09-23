@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import GeoFenceController from "@/controllers/geofenceController";
-import { setEventsData, setGeoFenceData, setTrackLocations } from "@/store/slices/geofenceSlice";
+import { setAddress, setEventsData, setGeoFenceData, setTrackLocations } from "@/store/slices/geofenceSlice";
 import AuthController from "@/controllers/authController";
 import toast from "react-hot-toast";
 
@@ -98,11 +98,27 @@ export const useGeoFence = () => {
     }
   };
 
+  const handleGetAddress = async (data: any) => {
+    try {
+      setIsAdding(true);
+      const response: any = await GeoFenceController.getAddress(data);
+      if(response){
+        dispatch(setAddress(response));
+      }
+      return response;
+    } catch (error) {
+      console.log(error);
+    }finally{
+      setIsAdding(false);
+    }
+  };
+
   return {
     cities,
     isAdding,
     isLoading,
     handleGetCookie,
+    handleGetAddress,
     handlePostMessage,
     handleGetEventsData,
     handleGeofenceCities,

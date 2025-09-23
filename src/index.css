@@ -127,3 +127,7 @@
     @apply bg-background text-foreground;
   }
 }
+
+.gm-ui-hover-effect {
+  display: none !important;
+}

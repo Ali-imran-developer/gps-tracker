@@ -24,6 +24,9 @@ class GeoFenceController {
   static postMessage(data: any) {
     return apiRequest("get", `/webapp/cleargeoalertweb.php?ID=${data?.ID}&agent=${data?.agent}&imei=${data?.imei}&alerttype=${data?.alerttype}&process=${data?.process}&vehicle=${data?.vehicle}&comments=${data?.comments}`);
   }
+  static getAddress(data: any) {
+    return apiRequest("get", `/locapplication1.php?lati=${data?.lati}&longi=${data?.longi}&deviceid=${data?.deviceid}`);
+  }
 }
 
 export default GeoFenceController;

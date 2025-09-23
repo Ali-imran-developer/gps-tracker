@@ -19,11 +19,13 @@ interface ObjectTableProps{
   objectsLoader: boolean;
   geoFenceData: any;
   trackLocations: any;
+  onSelectionChange?: (selected: any[]) => void;
 }
 
-const ObjectsTable = ({ objectsLoader, geoFenceData, trackLocations }: ObjectTableProps) => {
+const ObjectsTable = ({ objectsLoader, geoFenceData, trackLocations, onSelectionChange }: ObjectTableProps) => {
   const [isGroupExpanded, setIsGroupExpanded] = useState(true);
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
   // const SOCKET_URL = import.meta.env.VITE_WEBSOCKET_URL || 'ws://35.225.168.22';
   // const [messages, setMessages] = useState<any[]>([]);
 
@@ -74,6 +76,7 @@ const ObjectsTable = ({ objectsLoader, geoFenceData, trackLocations }: ObjectTab
 
   // console.log("messages", messages);
 
+  const getRowKey = (item: any, index: number) => `${item.id}-${index}`;
   const toggleExpand = (id: number) => {
     setExpandedRow(expandedRow === id ? null : id);
   };
@@ -87,6 +90,19 @@ const ObjectsTable = ({ objectsLoader, geoFenceData, trackLocations }: ObjectTab
   });
 
   const icons = { car: Car, truck: Truck, motorcycle: Bike, person: User };
+
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>, rowKey: string, item: any) => {
+    e.stopPropagation();
+    let updated: string[];
+    if (e.target.checked) {
+      updated = [rowKey];
+    } else {
+      updated = [];
+    }
+    setSelectedItems(updated);
+    const selectedObjects = mergedData?.filter((_, idx) => updated.includes(getRowKey(_, idx)));
+    onSelectionChange?.(selectedObjects ?? []);
+  };
 
   return (
     <div className="w-full max-w-md mx-auto border border-gray-300 rounded-md shadow-sm bg-white font-sans">
@@ -135,34 +151,30 @@ const ObjectsTable = ({ objectsLoader, geoFenceData, trackLocations }: ObjectTab
           {isGroupExpanded && (
             <div className="max-h-[calc(100vh-280px)] overflow-y-auto overflow-x-hidden">
               <div className="flex flex-col divide-y">
-                {mergedData?.map((item: any) => {
+                {mergedData?.map((item: any, index: number) => {
                   const Icon = icons[item?.category];
                   const isExpanded = expandedRow === item.id;
+                  const rowKey = getRowKey(item, index);
+                  const isChecked = selectedItems.includes(rowKey);
     
                   return (
                     <div key={item?.id} className="flex flex-col">
-                      <div className={`flex items-center justify-between py-1 ps-2 hover:bg-gray-50 cursor-pointer  ${item?.disabled === "True" ? "bg-gray-300 hover:bg-gray-300" : ""}`} onClick={() => toggleExpand(item.id)}>
-                      
+                      <div className={`flex items-center justify-between py-1 ps-2 cursor-pointer  ${item?.disabled === "True" ? "bg-gray-300 hover:bg-gray-300" : ""}`} onClick={() => toggleExpand(item.id)}> 
                         <input
                           type="checkbox"
-                          checked={false}
-                          onChange={() => {}}
-                          className="w-4 h-4 accent-blue-600 mr-2"
+                          checked={isChecked}
+                          onChange={(e) => handleCheckboxChange(e, rowKey, item)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-3 h-3 accent-blue-600 mr-2"
                         />
     
                         {/* Icon + Info */}
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                           {Icon && (
-                            <Icon
-                              className={`w-4 h-4 shrink-0 ${
-                                item?.status === "offline"
-                                  ? "text-red-600"
-                                  : "text-green-600"
-                              }`}
-                            />
+                            <Icon className={`w-4 h-4 shrink-0 ${item?.status === "offline" ? "text-red-600" : "text-green-600"}`} />
                           )}
                           <div className="truncate">
-                            <div className="text-[10px] font-medium text-gray-900 truncate">
+                            <div className="text-xs font-medium text-gray-900 truncate">
                               {item?.name ?? ""}
                             </div>
                             <div className="text-[10px] text-gray-500 truncate">
@@ -191,7 +203,10 @@ const ObjectsTable = ({ objectsLoader, geoFenceData, trackLocations }: ObjectTab
                               : "text-red-600"
                           }`}
                         />
-                        <MoreVertical className="w-4 h-4 text-gray-600 shrink-0" />
+
+                        <Button onClick={(e) => e.stopPropagation()} variant="outline" className={`w-5 h-5 shrink-0 border-none rounded-none ${item?.disabled === "True" ? "bg-gray-300 hover:bg-gray-300" : ""}`}>
+                          <MoreVertical className="w-4 h-4 text-gray-600 shrink-0" />
+                        </Button>
                       </div>
     
                       {isExpanded && (

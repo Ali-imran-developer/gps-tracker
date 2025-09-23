@@ -7,11 +7,12 @@ interface EventTableProps{
   geoFenceData: any;
   onSelectionChange?: (selected: any[]) => void;
   onMoreClick?: (item: any) => void;
+  selectedKeys: string[];
+  setSelectedKeys: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
-const EventsTable = ({ eventsLoader, eventsData, geoFenceData, onSelectionChange, onMoreClick  }: EventTableProps) => {
+const EventsTable = ({ eventsLoader, eventsData, geoFenceData, onSelectionChange, onMoreClick, selectedKeys, setSelectedKeys }: EventTableProps) => {
   const [expandedRows, setExpandedRows] = useState<string[]>([]); 
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
   const mergedData = eventsData?.map((event: any) => {
     const device = geoFenceData?.find((d: any) => Number(d?.id) === Number(event?.deviceid));
@@ -32,22 +33,22 @@ const EventsTable = ({ eventsLoader, eventsData, geoFenceData, onSelectionChange
     e.stopPropagation();
     let updated: string[];
     if (e.target.checked) {
-      updated = [rowKey];
+      updated = [...selectedKeys, rowKey];
     } else {
-      updated = [];
+      updated = selectedKeys.filter((key) => key !== rowKey);
     }
-    setSelectedItems(updated);
+    setSelectedKeys(updated);
     const selectedObjects = mergedData?.filter((_, idx) => updated.includes(getRowKey(_, idx)));
     onSelectionChange?.(selectedObjects ?? []);
   };
 
   return (
     <div className="w-full max-w-md mx-auto border rounded-md shadow-sm bg-white font-sans text-xs">
-      <div className="max-h-[70vh] overflow-y-auto divide-y">
+      <div className="max-h-[calc(100vh-220px)] overflow-y-auto divide-y">
         {(mergedData?.map((item: any, index: number) => {
             const rowKey = getRowKey(item, index);
             const isExpanded = expandedRows.includes(rowKey);
-            const isChecked = selectedItems.includes(rowKey);
+            const isChecked = selectedKeys.includes(rowKey);
             const disabled = !item?.lat || !item?.longi;
 
             return (

@@ -33,6 +33,7 @@ const GPSTracker = () => {
     });
   };
 
+  console.log("selectedItems", selectedItems);
   const mergedEvents = eventsData?.map((e: any) => {
     const override = localEvents.find((o) => o.ID === e.ID);
     return override ? { ...e, ...override } : e;
@@ -102,8 +103,8 @@ const GPSTracker = () => {
   return (
     <div className="h-screen flex flex-col bg-background">
       <Header />
-      <div className="flex-1 flex overflow-y-auto">
-        <Sidebar loader={isLoading} geoFenceData={geoFenceData} trackLocations={trackLocations} eventsData={mergedEvents} activeTab={activeTab}
+      <div className="flex-1 flex overflow-hidden">
+        <Sidebar selectedItems={selectedItems} loader={isLoading} geoFenceData={geoFenceData} trackLocations={trackLocations} eventsData={mergedEvents} activeTab={activeTab}
           onTabChange={handleTabChange} onSelectionChange={handleSelectionChange} page={page} totalPages={totalPages} handleNext={handleNext} handlePrevious={handlePrevious} onMoreClick={setMoreItem}
         />
         <MapView cities={cities} moreItem={moreItem} selectedItems={selectedItems} 
