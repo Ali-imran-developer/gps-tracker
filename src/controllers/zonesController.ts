@@ -15,8 +15,11 @@ class ZonesController {
   static removeZone(deviceId: string | number, geofenceId: string | number) {
     return apiRequest("get", `${geoFenceUrl}/geofence/removegeofence2.php?deviceId=${deviceId}&geofenceId=${geofenceId}`);
   }
-  static addNewZone(name: string | any, description: string | any, area: string | any) {
-    return apiRequest("get", `${geoFenceUrl}/geofence/checkgeoadded.php?name=${name}&description=${description}&area=${area}`);
+  static addNewZone(username: string, password: string | number, name: string | any, description: string | any, area: string | any) {
+    return apiRequest("get", `${geoFenceUrl}/geofence/checkgeoaddfaisalabad.php?username=${username}&password=${password}&name=${name}&description=${description}&area=${area}`);
+  }
+  static editZone(id: number, username: string, password: string | number, name: string | any, description: string | any, area: string | any) {
+    return apiRequest("get", `${geoFenceUrl}/geofence/geofenceUpdatefsd.php?id=${id}&username=${username}&password=${password}&name=${name}&description=${description}&area=${area}`);
   }
 }
 

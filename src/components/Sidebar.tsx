@@ -35,45 +35,25 @@ const headerIcons = [
   "/assets/places-icons/trash.png",
 ];
 
-const Sidebar = ({
-  selectedItems,
-  loader,
-  geoFenceData,
-  trackLocations,
-  eventsData,
-  activeTab = "Objects",
-  onTabChange,
-  onSelectionChange,
-  page,
-  totalPages,
-  handleNext,
-  handlePrevious,
-  onMoreClick,
-}: SidebarProps) => {
+const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsData, activeTab = "Objects", 
+  onTabChange, onSelectionChange, page, totalPages, handleNext, handlePrevious, onMoreClick }: SidebarProps) => {
   const [selectedTab, setSelectedTab] = useState(activeTab);
   const tabs = ["Objects", "Events", "Places", "History"];
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const { allZones, selectedZones } = useSelector((state: any) => state.Zones);
-  const deviceId = selectedItems[0]?.deviceId || selectedItems[0]?.id;
+  const firstItem = selectedItems?.[0];
+  const deviceId = firstItem && !firstItem?.area ? firstItem?.deviceId ?? firstItem?.id : undefined;
   const { isLoading, handleGetAllZones } = useZones(deviceId);
   const [open, setOpen] = useState(false);
+  const [editingZone, setEditingZone] = useState<any | null>(null);
 
-  const mergedEventsData =
-    eventsData?.map((event: any) => {
-      const device = geoFenceData?.find(
-        (d: any) => Number(d?.id) === Number(event?.deviceid)
-      );
-      return {
-        ...event,
-        ...(device ?? {}),
-      };
-    }) || [];
+  const mergedEventsData = eventsData?.map((event: any) => {
+    const device = geoFenceData?.find((d: any) => Number(d?.id) === Number(event?.deviceid));
+    return { ...event, ...(device ?? {})};
+  }) || [];
 
-  const allSelected =
-    mergedEventsData?.length > 0 &&
-    selectedKeys.length === mergedEventsData.length;
-  const isIndeterminate =
-    selectedKeys.length > 0 && selectedKeys.length < mergedEventsData.length;
+  const allSelected = mergedEventsData?.length > 0 && selectedKeys.length === mergedEventsData.length;
+  const isIndeterminate = selectedKeys.length > 0 && selectedKeys.length < mergedEventsData.length;
 
   const handleSelectAll = () => {
     if (allSelected) {
@@ -296,9 +276,9 @@ const Sidebar = ({
               {headerIcons?.map((src, idx) => {
                 if (src?.includes("plus.png")) {
                   return (
-                    <CreateGeofence key={idx} open={open} setOpen={setOpen}
+                    <CreateGeofence key={idx} open={open} setOpen={setOpen} editingZone={editingZone}
                       trigger={
-                        <Button variant="outline" onClick={() => setOpen(true)} className="bg-[#04003A] rounded-none hover:bg-blue-950 px-1 py-0 h-7 w-7" size="sm">
+                        <Button variant="outline" onClick={() => { setOpen(true); setEditingZone(null); }} className="bg-[#04003A] rounded-none hover:bg-blue-950 px-1 py-0 h-7 w-7" size="sm">
                           <img src={src} alt="plus icon" className="w-4 h-4 object-contain" />
                         </Button>
                       }
@@ -321,22 +301,22 @@ const Sidebar = ({
           </div>
 
           <PlacesTable
-            isLoading={isLoading}
+            setOpenEditDialog={setOpen}
+            setEditingZone={setEditingZone}
             deviceId={deviceId}
             allZones={allZones}
+            isLoading={isLoading}
             selectedZones={selectedZones}
             onSelectionChange={onSelectionChange}
           />
         </div>
       )}
 
-      {selectedTab !== "Objects" &&
-        selectedTab !== "Events" &&
-        selectedTab !== "Places" && (
-          <div className="flex-1 flex items-center justify-center text-muted-foreground">
-            {selectedTab} content coming soon...
-          </div>
-        )}
+      {selectedTab !== "Objects" && selectedTab !== "Events" && selectedTab !== "Places" && (
+        <div className="flex-1 flex items-center justify-center text-muted-foreground">
+          {selectedTab} content coming soon...
+        </div>
+      )}
     </div>
   );
 };

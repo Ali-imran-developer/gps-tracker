@@ -93,11 +93,11 @@ const GPSTracker = () => {
     return <Dashboard onNavigate={handleNavigation} />;
   }
 
-  useEffect(() => {
-    if(selectedItems?.[0]?.geofenceid){
-      handleGeofenceCities(selectedItems?.[0]?.geofenceid);
-    }
-  }, [selectedItems]);
+  // useEffect(() => {
+  //   if(selectedItems?.[0]?.geofenceid){
+  //     handleGeofenceCities(selectedItems?.[0]?.geofenceid);
+  //   }
+  // }, [selectedItems]);
 
   return (
     <div className="h-screen flex flex-col bg-background">

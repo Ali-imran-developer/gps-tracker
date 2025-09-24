@@ -20,8 +20,6 @@ interface MapViewProps {
   onProcessUpdate: any;
 }
 
-const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-
 const containerStyle = {
   width: "100%",
   height: "100%",
@@ -29,12 +27,13 @@ const containerStyle = {
 
 function parseWKT(area: string): google.maps.LatLngLiteral[] {
   if (!area) return [];
-  const match = area.match(/\(\((.*)\)\)/);
+  const match = area.match(/POLYGON\s*\(\((.*?)\)\)/i);
   if (!match) return [];
-  return match[1]
-    .split(",")
-    .map(coord => coord.trim().split(" ").map(Number))
-    .map(([lng, lat]) => ({ lat, lng }));
+  const coordinates = match[1].split(",").map(coord => {
+    const [lat, lng] = coord.trim().split(/\s+/).map(Number);
+    return { lat, lng };
+  }).filter(coord => !isNaN(coord.lat) && !isNaN(coord.lng));
+  return coordinates;
 }
 
 const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate }: MapViewProps) => {
@@ -114,11 +113,11 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
 
   // useEffect(() => {
   //   if (selectedItems.length > 0 && mapRef.current) {
-  //     const item = selectedItems[0];
-  //     const rawLat = item?.lat ?? item?.latitude;
-  //     const rawLng = item?.longi ?? item?.longitude;
-  //     const lat = parseFloat(rawLat) || 0;
-  //     const lng = parseFloat(rawLng) || 0;
+  //     selectedItems?.map((item) => {
+  //       const rawLat = item?.lat ?? item?.latitude;
+  //       const rawLng = item?.longi ?? item?.longitude;
+  //       const lat = parseFloat(rawLat) || 0;
+  //       const lng = parseFloat(rawLng) || 0;
   //     if (isFinite(lat) && isFinite(lng)) {
   //       const newCenter = { lat, lng };
   //       mapRef.current.panTo(newCenter);
@@ -126,26 +125,93 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
   //     } else {
   //       console.warn("Invalid lat/lng:", rawLat, rawLng, item);
   //     }
+  //     });
+  //   }
+  // }, [selectedItems]);
+
+  // useEffect(() => {
+  //   if (selectedItems.length > 0 && mapRef.current) {
+  //     const firstItem = selectedItems[0];
+  //     if (firstItem.area) {
+  //       const path = parseWKT(firstItem.area);
+  //       if (path.length > 0) {
+  //         const bounds = new window.google.maps.LatLngBounds();
+  //         path.forEach(coord => bounds.extend(coord));
+  //         mapRef.current.fitBounds(bounds);
+  //       }
+  //     }
   //   }
   // }, [selectedItems]);
 
   useEffect(() => {
     if (selectedItems.length > 0 && mapRef.current) {
-      // const bounds = new google.maps.LatLngBounds();
-      selectedItems?.map((item) => {
+      selectedItems.forEach((item) => {
+        // Case 1: Circle geometry
+        if (item.area?.startsWith("CIRCLE")) {
+          const match = item.area.match(/CIRCLE\s*\(\s*([\d.-]+)\s+([\d.-]+)\s*,\s*([\d.-]+)\s*\)/);
+          if (match) {
+            const lat = parseFloat(match[1]);
+            const lng = parseFloat(match[2]);
+            const radius = parseFloat(match[3]);
+
+            // Pan to circle center
+            mapRef.current.panTo({ lat, lng });
+
+            // Adjust zoom roughly based on radius
+            const circleBounds = new google.maps.Circle({
+              center: { lat, lng },
+              radius,
+            }).getBounds();
+            if (circleBounds) {
+              mapRef.current.fitBounds(circleBounds);
+            }
+          }
+          return;
+        }
+
+        // Case 2: Point geometry (vehicle lat/lng)
         const rawLat = item?.lat ?? item?.latitude;
         const rawLng = item?.longi ?? item?.longitude;
         const lat = parseFloat(rawLat) || 0;
         const lng = parseFloat(rawLng) || 0;
-      if (isFinite(lat) && isFinite(lng)) {
-        const newCenter = { lat, lng };
-        mapRef.current.panTo(newCenter);
-        mapRef.current.setZoom(15);
-      } else {
-        console.warn("Invalid lat/lng:", rawLat, rawLng, item);
-      }
+        if (isFinite(lat) && isFinite(lng)) {
+          mapRef.current.panTo({ lat, lng });
+          mapRef.current.setZoom(15);
+        }
       });
-      // mapRef.current.fitBounds(bounds);
+    }
+  }, [selectedItems]);
+
+  useEffect(() => {
+    if (selectedItems.length > 0 && mapRef.current) {
+      const firstItem = selectedItems[0];
+      if (!firstItem?.area) return;
+
+      if (firstItem.area.startsWith("CIRCLE")) {
+        // Handle circle zoom
+        const match = firstItem.area.match(/CIRCLE\s*\(\s*([\d.-]+)\s+([\d.-]+)\s*,\s*([\d.-]+)\s*\)/);
+        if (match) {
+          const lat = parseFloat(match[1]);
+          const lng = parseFloat(match[2]);
+          const radius = parseFloat(match[3]);
+
+          const circleBounds = new google.maps.Circle({
+            center: { lat, lng },
+            radius,
+          }).getBounds();
+          if (circleBounds) {
+            mapRef.current.fitBounds(circleBounds);
+          }
+        }
+      } else {
+        // Handle polygon zoom
+        const path = parseWKT(firstItem.area);
+        if (path.length > 0) {
+          const bounds = new window.google.maps.LatLngBounds();
+          path.forEach((coord) => bounds.extend(coord));
+          mapRef.current.fitBounds(bounds);
+        }
+      }
     }
   }, [selectedItems]);
 
@@ -160,8 +226,10 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
         longi: rawLng,
         deviceid: deviceId,
       };
-      handleGetAddress(queryParams);
-      setShowAddress(true);
+      if(queryParams?.lati && queryParams?.longi && queryParams?.deviceid){
+        handleGetAddress(queryParams);
+        setShowAddress(true);
+      }
     }
   }, [selectedItems]);
 
@@ -303,6 +371,7 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
     }
     return formatVehicleInfoContent(item);
   };
+  console.log("Selected Items:", selectedItems);
 
   return (
     <div className="flex-1 relative bg-accent min-h-screen overflow-hidden">
@@ -425,9 +494,139 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
         ))}
       </div>
 
-                  {/* {selectedItems?.map((zone, idx) => {
-              const path = parseWKT(zone.area);
-              if (path.length === 0) return null;
+      <div className="w-full h-screen">
+        <GoogleMap
+          mapTypeId="roadmap"
+          mapContainerStyle={containerStyle}
+          center={center}
+          zoom={zoom}
+          onLoad={(map: any) => (mapRef.current = map)}
+          onClick={handleMapClick}
+          options={{
+            zoomControl: false,
+            mapTypeControl: false,
+            scaleControl: false,
+            rotateControl: false,
+            fullscreenControl: false,
+            gestureHandling: 'greedy',
+          }}
+        >
+          {selectedItems?.map((item, idx) => {
+            if (item?.area?.startsWith("CIRCLE")) {
+              const match = item.area.match(/CIRCLE\s*\(\s*([\d.-]+)\s+([\d.-]+)\s*,\s*([\d.-]+)\s*\)/);
+              if (!match) return null;
+              const lat = parseFloat(match[1]);
+              const lng = parseFloat(match[2]);
+              const radius = parseFloat(match[3]);
+
+              return (
+                <Circle
+                  key={`circle-${item.id}-${idx}`}
+                  center={{ lat, lng }}
+                  radius={radius}
+                  options={{
+                    fillColor: "#4285F4",
+                    fillOpacity: 0.15,
+                    strokeColor: "#4285F4",
+                    strokeOpacity: 0.6,
+                    strokeWeight: 2,
+                  }}
+                />
+              );
+            }
+
+            if (item?.area?.startsWith("POLYGON")) {
+              const path = parseWKT(item.area);
+              if (!path?.length) return null;
+
+              return (
+                <Polygon
+                  key={`polygon-${item.id}-${idx}`}
+                  paths={path}
+                  options={{
+                    fillColor: "#4285F4",
+                    fillOpacity: 0.15,
+                    strokeColor: "#4285F4",
+                    strokeOpacity: 0.6,
+                    strokeWeight: 2,
+                  }}
+                />
+              );
+            }
+
+            const lat = parseFloat(item?.lat || item.latitude || "0");
+            const lng = parseFloat(item?.longi || item.longitude || "0");
+            const surroundingArea = createSurroundingArea(item);
+
+            return (
+              <React.Fragment key={`vehicle-${item.positionid || idx}`}>
+                <Circle
+                  center={surroundingArea.center}
+                  radius={surroundingArea.radius}
+                  options={{
+                    fillColor: item.ignition === "1" ? "#00FF00" : "#FFA500",
+                    fillOpacity: 0.15,
+                    strokeColor: item.ignition === "1" ? "#00AA00" : "#FF8C00",
+                    strokeOpacity: 0.6,
+                    strokeWeight: 2,
+                    clickable: false,
+                  }}
+                />
+                <Marker
+                  position={{ lat, lng }}
+                  title={`${item.vehicle || "Vehicle"} - Speed: ${item.speed} km/h`}
+                  icon={getCarIcon()}
+                  animation={
+                    item.ignition === "1"
+                      ? google.maps.Animation.BOUNCE
+                      : undefined
+                  }
+                />
+                <InfoWindow
+                  position={{ lat: lat + 0.0008, lng }}
+                  options={{
+                    disableAutoPan: false,
+                    pixelOffset: new google.maps.Size(0, -10),
+                    maxWidth: 350,
+                  }}
+                >
+                  <div className="custom-info-window p-0">
+                    {renderInfoContent(item, selectedItems.length > 1)}
+                  </div>
+                </InfoWindow>
+              </React.Fragment>
+            );
+          })}
+        </GoogleMap>
+
+        {/* <GoogleMap mapTypeId="roadmap" mapContainerStyle={containerStyle} center={center} zoom={zoom} onLoad={(map: any) => (mapRef.current = map)} onClick={handleMapClick}
+          options={{ zoomControl: false, mapTypeControl: false, scaleControl: false, rotateControl: false, fullscreenControl: false, gestureHandling: 'greedy' }}>
+            {selectedItems?.map((zone, idx) => {
+              if (zone?.area?.startsWith("CIRCLE")) {
+                const match = zone.area.match(/CIRCLE\s*\(\s*([\d.-]+)\s+([\d.-]+)\s*,\s*([\d.-]+)\s*\)/);
+                if (!match) return null;
+                const lat = parseFloat(match[1]);
+                const lng = parseFloat(match[2]);
+                const radius = parseFloat(match[3]);
+                console.log("Rendering circle:", { lat, lng, radius });
+                return (
+                  <Circle
+                    key={`circle-${zone.id}-${idx}`}
+                    center={{ lat, lng }}
+                    radius={radius}
+                    options={{
+                      fillColor: "#4285F4",
+                      fillOpacity: 0.15,
+                      strokeColor: "#4285F4",
+                      strokeOpacity: 0.6,
+                      strokeWeight: 2,
+                    }}
+                  />
+                );
+              }
+
+              const path = parseWKT(zone?.area);
+              if (path?.length === 0) return null;
               return (
                 <Polygon
                   key={`zone-${zone.id}-${idx}`}
@@ -441,26 +640,7 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
                   }}
                 />
               );
-            })} */}
-
-      <div className="w-full h-screen">
-        {/* <LoadScript googleMapsApiKey={API_KEY}> */}
-          <GoogleMap
-            mapTypeId="roadmap"
-            mapContainerStyle={containerStyle}
-            center={center}
-            zoom={zoom}
-            onLoad={(map: any) => (mapRef.current = map)}
-            onClick={handleMapClick}
-            options={{
-              zoomControl: false,
-              mapTypeControl: false,
-              scaleControl: false,
-              rotateControl: false,
-              fullscreenControl: false,
-              gestureHandling: 'greedy'
-            }}
-          >
+            })}
             {selectedItems?.map((item, idx) => {
               const lat = parseFloat(item?.lat || item.latitude || "0");
               const lng = parseFloat(item?.longi || item.longitude || "0");
@@ -490,8 +670,7 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
                 </React.Fragment>
               );
             })}
-          </GoogleMap>
-        {/* </LoadScript> */}
+        </GoogleMap> */}
       </div>
     </div>
   );

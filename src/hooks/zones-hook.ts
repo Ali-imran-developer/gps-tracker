@@ -73,11 +73,25 @@ export const useZones = (Id?: string | number) => {
     }
   };
 
-  const handleAddNewZone = async (name: string | any, description: string | any, area: string | any) => {
+  const handleAddNewZone = async (username: string, password: string | number, name: string | any, description: string | any, area: string | any) => {
     try {
       setLoadingZones(true);
-      const response: any = await ZonesController.addNewZone(name, description, area);
+      const response: any = await ZonesController.addNewZone(username, password, name, description, area);
       toast.success("Geofence Added successfully");
+      await handleGetAllZones();
+      return response;
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoadingZones(false);
+    }
+  };
+
+  const handleEditZone = async (id: number, username: string, password: string | number, name: string | any, description: string | any, area: string | any) => {
+    try {
+      setLoadingZones(true);
+      const response: any = await ZonesController.editZone(id, username, password, name, description, area);
+      toast.success("Geofence Updated successfully");
       await handleGetAllZones();
       return response;
     } catch (error) {
@@ -90,6 +104,7 @@ export const useZones = (Id?: string | number) => {
   return {
     isLoading,
     isLoadingZones,
+    handleEditZone,
     handleAddNewZone,
     handleAttachZone,
     handleDeleteZone,
