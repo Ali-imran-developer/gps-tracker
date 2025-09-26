@@ -4,6 +4,7 @@ interface UserState {
   geoFenceData: [];
   trackLocations: [];
   eventsData: [];
+  fetchAllMessages?: [];
   address: any;
 }
 
@@ -11,6 +12,7 @@ const initialState: UserState = {
   geoFenceData: [],
   trackLocations: [],
   eventsData: [],
+  fetchAllMessages: [],
   address: null,
 };
 
@@ -30,8 +32,11 @@ export const GeoFenceSlice = createSlice({
     setAddress: (state, action: PayloadAction<any>) => {
       state.address = action.payload;
     },
+    setAllMessages: (state, action: PayloadAction<any>) => {
+      state.fetchAllMessages = action.payload;
+    },
   },
 });
 
-export const { setGeoFenceData, setTrackLocations, setEventsData, setAddress } = GeoFenceSlice.actions;
+export const { setGeoFenceData, setTrackLocations, setEventsData, setAddress, setAllMessages } = GeoFenceSlice.actions;
 export default GeoFenceSlice.reducer;

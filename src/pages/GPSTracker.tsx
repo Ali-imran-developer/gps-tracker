@@ -10,8 +10,17 @@ import AuthController from "@/controllers/authController";
 const GPSTracker = () => {
   const [currentPage, setCurrentPage] = useState<"main" | "dashboard">("main");
   const [activeTab, setActiveTab] = useState("Objects");
-  const { cities, isLoading, handleCheckalldevices, handleGetTrackLocations, handleGetEventsData, handleGeofenceCities } = useGeoFence();
-  const { geoFenceData, trackLocations, eventsData } = useSelector((state: any) => state.GeoFence);
+  const {
+    cities,
+    isLoading,
+    handleCheckalldevices,
+    handleGetTrackLocations,
+    handleGetEventsData,
+    handleGeofenceCities,
+  } = useGeoFence();
+  const { geoFenceData, trackLocations, eventsData } = useSelector(
+    (state: any) => state.GeoFence
+  );
   const session = AuthController.getSession();
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
   const [moreItem, setMoreItem] = useState<any | null>(null);
@@ -23,7 +32,7 @@ const GPSTracker = () => {
     setLocalEvents((prev) => {
       const exists = prev.find((e) => e.ID === id);
       if (exists) {
-        return prev.map((e) => e.ID === id ? { ...e, process } : e);
+        return prev.map((e) => (e.ID === id ? { ...e, process } : e));
       }
       const event = eventsData.find((e: any) => e.ID === id);
       if (event) {
@@ -57,7 +66,10 @@ const GPSTracker = () => {
     let isMounted = true;
     const fetchData = async () => {
       if (!session?.user) return;
-      const eventsResponse = await handleGetEventsData({ page, userid: session.user.id });
+      const eventsResponse = await handleGetEventsData({
+        page,
+        userid: session.user.id,
+      });
       const trackResponse = await handleGetTrackLocations(queryParams);
       // optional optimization: only update if data changed
       // if (!isEqual(eventsResponse, eventsData)) dispatch(setEventsData(eventsResponse));
@@ -103,11 +115,27 @@ const GPSTracker = () => {
     <div className="h-screen flex flex-col bg-background">
       <Header />
       <div className="flex-1 flex overflow-hidden">
-        <Sidebar selectedItems={selectedItems} loader={isLoading} geoFenceData={geoFenceData} trackLocations={trackLocations} eventsData={mergedEvents} activeTab={activeTab}
-          onTabChange={handleTabChange} onSelectionChange={handleSelectionChange} page={page} totalPages={totalPages} handleNext={handleNext} handlePrevious={handlePrevious} onMoreClick={setMoreItem}
+        <Sidebar
+          selectedItems={selectedItems}
+          loader={isLoading}
+          geoFenceData={geoFenceData}
+          trackLocations={trackLocations}
+          eventsData={mergedEvents}
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          onSelectionChange={handleSelectionChange}
+          page={page}
+          totalPages={totalPages}
+          handleNext={handleNext}
+          handlePrevious={handlePrevious}
+          onMoreClick={setMoreItem}
         />
-        <MapView cities={cities} moreItem={moreItem} selectedItems={selectedItems} 
-          onNavigate={handleNavigation} onProcessUpdate={updateEventProcess}
+        <MapView
+          cities={cities}
+          moreItem={moreItem}
+          selectedItems={selectedItems}
+          onNavigate={handleNavigation}
+          onProcessUpdate={updateEventProcess}
         />
       </div>
     </div>

@@ -43,8 +43,6 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
   const mapRef = useRef<google.maps.Map | null>(null);
   const [selectedArea, setSelectedArea] = useState<any | null>(null);
   const [showDetailsPanel, setShowDetailsPanel] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const session = AuthController.getSession();
   const { isAdding, handlePostMessage, handleGetAddress } = useGeoFence();
   const { address } = useSelector((state: any) => state.GeoFence);
   const [showAddress, setShowAddress] = useState(true);
@@ -68,96 +66,16 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
     return undefined;
   };
 
-  const initialValues = {
-    ID: moreItem?.ID ?? "",
-    agent: session?.credentials?.user ?? "",
-    imei: moreItem?.imei ?? "",
-    alerttype: moreItem?.type ?? "",
-    process: "1",
-    vehicle: moreItem?.vehicle ?? "",
-    comments: "",
-    selectedOption: "",
-  };
-
-  const formik = useFormik({
-    initialValues,
-    enableReinitialize: true,
-    onSubmit: async (values, { resetForm }) => {
-      try{
-        const finalComment = values.selectedOption || values.comments;
-        const { selectedOption, ...apiValues } = values;
-        const payload = {
-          ...apiValues,
-          comments: finalComment,
-        };
-        console.log("Form submitted:", payload);
-        await handlePostMessage(payload);
-        if (payload.ID) {
-          onProcessUpdate(payload.ID, "1");
-        }
-        resetForm();
-        setShowModal(false);
-      }catch(error){
-        console.log(error);
-      }
-    },
-  });
-
-  const isButtonDisabled = formik.values.comments.trim() === "" && formik.values.selectedOption.trim() === "";
-
-  useEffect(() => {
-    if (moreItem) {
-      setShowModal(true);
-    }
-  }, [moreItem]);
-
-  // useEffect(() => {
-  //   if (selectedItems.length > 0 && mapRef.current) {
-  //     selectedItems?.map((item) => {
-  //       const rawLat = item?.lat ?? item?.latitude;
-  //       const rawLng = item?.longi ?? item?.longitude;
-  //       const lat = parseFloat(rawLat) || 0;
-  //       const lng = parseFloat(rawLng) || 0;
-  //     if (isFinite(lat) && isFinite(lng)) {
-  //       const newCenter = { lat, lng };
-  //       mapRef.current.panTo(newCenter);
-  //       mapRef.current.setZoom(15);
-  //     } else {
-  //       console.warn("Invalid lat/lng:", rawLat, rawLng, item);
-  //     }
-  //     });
-  //   }
-  // }, [selectedItems]);
-
-  // useEffect(() => {
-  //   if (selectedItems.length > 0 && mapRef.current) {
-  //     const firstItem = selectedItems[0];
-  //     if (firstItem.area) {
-  //       const path = parseWKT(firstItem.area);
-  //       if (path.length > 0) {
-  //         const bounds = new window.google.maps.LatLngBounds();
-  //         path.forEach(coord => bounds.extend(coord));
-  //         mapRef.current.fitBounds(bounds);
-  //       }
-  //     }
-  //   }
-  // }, [selectedItems]);
-
   useEffect(() => {
     if (selectedItems.length > 0 && mapRef.current) {
       selectedItems.forEach((item) => {
-        // Case 1: Circle geometry
         if (item.area?.startsWith("CIRCLE")) {
           const match = item.area.match(/CIRCLE\s*\(\s*([\d.-]+)\s+([\d.-]+)\s*,\s*([\d.-]+)\s*\)/);
           if (match) {
             const lat = parseFloat(match[1]);
             const lng = parseFloat(match[2]);
             const radius = parseFloat(match[3]);
-
-            // Pan to circle center
             mapRef.current.panTo({ lat, lng });
-
-            // Adjust zoom roughly based on radius
             const circleBounds = new google.maps.Circle({
               center: { lat, lng },
               radius,
@@ -168,8 +86,6 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
           }
           return;
         }
-
-        // Case 2: Point geometry (vehicle lat/lng)
         const rawLat = item?.lat ?? item?.latitude;
         const rawLng = item?.longi ?? item?.longitude;
         const lat = parseFloat(rawLat) || 0;
@@ -374,59 +290,6 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
 
   return (
     <div className="flex-1 relative bg-accent min-h-screen overflow-hidden">
-      {showModal && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-lg w-[400px] p-4 relative">
-            <div className="flex justify-between items-center border-b pb-2 mb-4">
-              <h2 className="text-lg font-semibold">Add Comment</h2>
-              <button onClick={() => { setShowModal(false); formik?.resetForm() }}>
-                <X className="w-5 h-5 text-gray-600 hover:text-black" />
-              </button>
-            </div>
-
-            <form onSubmit={formik.handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Comments
-                </label>
-                <Input name="comments" value={formik?.values?.comments} disabled={formik.values.selectedOption !== ""} onChange={formik.handleChange} placeholder="Enter your comment..." className="mt-1" />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Choose option
-                </label>
-                <Select 
-                  name="comments"
-                  onValueChange={(val) => formik.setFieldValue("selectedOption", val)}
-                  value={formik?.values?.selectedOption}
-                  disabled={formik?.values?.comments?.trim() !== ""}
-                >
-                  <SelectTrigger className="mt-1 w-full">
-                    <SelectValue placeholder="Choose your option" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1 call ok">1 Call Ok</SelectItem>
-                    <SelectItem value="2 call ok">2 Call Ok</SelectItem>
-                    <SelectItem value="numbers busy">Numbers Busy</SelectItem>
-                    <SelectItem value="numbers not responding">
-                      Numbers Not Responding
-                    </SelectItem>
-                    <SelectItem value="Always Busy">Always Busy</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
-                    <SelectItem value="Wrong Alert">Wrong Alert</SelectItem>
-                    <SelectItem value="Repeat Alert">Repeat Alert</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <Button type="submit" disabled={isButtonDisabled} className="w-full text-white px-4 py-2">
-                {isAdding ? <Loader2 className="w-6 h-6 animate-spin" /> : "Add"}
-              </Button>
-            </form>
-          </div>
-        </div>
-      )}
 
       {selectedItems?.length > 0 && address && showAddress && (
         <div className="absolute bottom-[56px] left-1/2 -translate-x-1/2 z-50">
