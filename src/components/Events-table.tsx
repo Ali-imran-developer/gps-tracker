@@ -40,16 +40,20 @@ const EventsTable = ({
   const menuRef = useRef<HTMLDivElement | null>(null);
   const { isAdding, handleGetAllMessages } = useGeoFence();
   const { fetchAllMessages } = useSelector((state: any) => state.GeoFence);
+  const [page, setPage] = useState(1);
+  const totalPages = 50;
+  const handlePrevious = () => setPage((prev) => Math.max(prev - 1, 1));
+  const handleNext = () =>  setPage((prev) => Math.min(prev + 1, totalPages));
 
   useEffect(() => {
     const queryParams = {
       veh: selectedItem?.vehicle,
-      page: 1,
+      page: page,
     };
     if(selectedItem){
       handleGetAllMessages(queryParams);
     }
-  }, [selectedItem]);
+  }, [selectedItem, page]);
 
   const mergedData = eventsData?.map((event: any) => {
     const device = geoFenceData?.find((d: any) => Number(d?.id) === Number(event?.deviceid));
@@ -195,6 +199,10 @@ const EventsTable = ({
       />
 
       <ViewComments
+        page={page}
+        totalPages={totalPages}
+        handlePrevious={handlePrevious}
+        handleNext={handleNext}
         loading={isAdding}
         viewDialogOpen={viewDialogOpen} 
         setViewDialogOpen={setViewDialogOpen}

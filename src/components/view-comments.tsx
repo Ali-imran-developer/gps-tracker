@@ -4,8 +4,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "./ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-const ViewComments = ({ viewDialogOpen, setViewDialogOpen, data, loading }) => {
+const ViewComments = ({
+  page,
+  totalPages,
+  handlePrevious,
+  handleNext,
+  viewDialogOpen,
+  setViewDialogOpen,
+  data,
+  loading,
+}) => {
   return (
     <div>
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
@@ -13,7 +24,7 @@ const ViewComments = ({ viewDialogOpen, setViewDialogOpen, data, loading }) => {
           <DialogHeader>
             <DialogTitle>View Comments</DialogTitle>
           </DialogHeader>
-          
+
           {loading ? (
             <div className="flex justify-center items-center py-8">
               <div className="w-8 h-8 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
@@ -32,20 +43,38 @@ const ViewComments = ({ viewDialogOpen, setViewDialogOpen, data, loading }) => {
               <div className="max-h-64 overflow-y-auto">
                 {Array.isArray(data) && data?.length > 0 ? (
                   data?.map((item, index) => (
-                    <div key={index} className="flex border-b last:border-b-0 hover:bg-gray-50">
-                      <span className="w-1/6 p-1 border-r truncate" title={item.imei}>
+                    <div
+                      key={index}
+                      className="flex border-b last:border-b-0 hover:bg-gray-50"
+                    >
+                      <span
+                        className="w-1/6 p-1 border-r truncate"
+                        title={item.imei}
+                      >
                         {item.imei}
                       </span>
-                      <span className="w-1/6 p-1 border-r truncate" title={item.vehicle}>
+                      <span
+                        className="w-1/6 p-1 border-r truncate"
+                        title={item.vehicle}
+                      >
                         {item.vehicle}
                       </span>
-                      <span className="w-1/6 p-1 border-r truncate" title={item.alerttype}>
+                      <span
+                        className="w-1/6 p-1 border-r truncate"
+                        title={item.alerttype}
+                      >
                         {item.alerttype}
                       </span>
-                      <span className="w-2/6 p-1 border-r truncate" title={item.comments}>
+                      <span
+                        className="w-2/6 p-1 border-r truncate"
+                        title={item.comments}
+                      >
                         {item.comments}
                       </span>
-                      <span className="w-1/6 p-1 truncate" title={item.DateTime}>
+                      <span
+                        className="w-1/6 p-1 truncate"
+                        title={item.DateTime}
+                      >
                         {item.DateTime}
                       </span>
                     </div>
@@ -58,6 +87,27 @@ const ViewComments = ({ viewDialogOpen, setViewDialogOpen, data, loading }) => {
               </div>
             </div>
           )}
+
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              className="h-7 px-2 text-[10px] rounded-none"
+              onClick={handlePrevious}
+              disabled={page === 1}
+            >
+              <ChevronLeft className="w-3 h-3" />
+              Previous
+            </Button>
+
+            <Button
+              className="h-7 px-2 text-[10px] bg-[#04003A] hover:bg-blue-950 rounded-none"
+              onClick={handleNext}
+              disabled={page === totalPages}
+            >
+              Next
+              <ChevronRight className="w-3 h-3" />
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
