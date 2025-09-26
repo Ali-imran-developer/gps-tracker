@@ -101,6 +101,20 @@ export const useZones = (Id?: string | number) => {
     }
   };
 
+  const handleDeleteGeofence = async (id: number) => {
+    try {
+      setLoadingZones(true);
+      const response: any = await ZonesController.deleteZone(id);
+      toast.success("Geofence Deleted successfully");
+      await handleGetAllZones();
+      return response;
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoadingZones(false);
+    }
+  };
+
   return {
     isLoading,
     isLoadingZones,
@@ -109,6 +123,7 @@ export const useZones = (Id?: string | number) => {
     handleAttachZone,
     handleDeleteZone,
     handleGetAllZones,
+    handleDeleteGeofence,
     handleGetSelectedZones,
   };
 };

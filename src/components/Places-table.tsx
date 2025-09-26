@@ -33,7 +33,7 @@ const PlacesTable = ({
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDetachDialogOpen, setIsDetachDialogOpen] = useState(false);
-  const { isLoadingZones, handleAttachZone, handleDeleteZone } = useZones(deviceId);
+  const { isLoadingZones, handleAttachZone, handleDeleteZone, handleDeleteGeofence } = useZones(deviceId);
   const [open, setOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -106,6 +106,17 @@ const PlacesTable = ({
     setCurrentZone(zone);
     setSelectedZoneId(zone.id.toString());
     setIsDetachDialogOpen(true);
+  };
+
+  const handleDeleteGeofenceConfirm = async () => {
+    try {
+      if (currentZone?.id) {
+        await handleDeleteGeofence(currentZone.id);
+        setIsDeleteDialogOpen(false);
+      }
+    } catch (error) {
+      console.log(error);
+    };
   };
 
   return (
@@ -289,7 +300,7 @@ const PlacesTable = ({
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => setIsDeleteDialogOpen(false)}>
+                    <AlertDialogAction onClick={handleDeleteGeofenceConfirm}>
                       {isLoadingZones ? (<Loader2 className="w-4 h-4 animate-spin" />) : ("Delete")}
                     </AlertDialogAction>
                   </AlertDialogFooter>

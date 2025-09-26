@@ -371,7 +371,6 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
     }
     return formatVehicleInfoContent(item);
   };
-  console.log("Selected Items:", selectedItems);
 
   return (
     <div className="flex-1 relative bg-accent min-h-screen overflow-hidden">
@@ -560,7 +559,7 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
 
             return (
               <React.Fragment key={`vehicle-${item.positionid || idx}`}>
-                <Circle
+                {/* <Circle
                   center={surroundingArea.center}
                   radius={surroundingArea.radius}
                   options={{
@@ -571,7 +570,7 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
                     strokeWeight: 2,
                     clickable: false,
                   }}
-                />
+                /> */}
                 <Marker
                   position={{ lat, lng }}
                   title={`${item.vehicle || "Vehicle"} - Speed: ${item.speed} km/h`}
