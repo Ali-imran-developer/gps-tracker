@@ -132,7 +132,7 @@ const PlacesTable = ({
         </Button>
       </div>
 
-      <div className="max-h-[calc(100vh-180px)] overflow-y-auto divide-y">
+      <div className="max-h-[calc(100vh-210px)] overflow-y-auto divide-y">
         {activeTab === "all" && (
           <>
             <div className="px-0 py-2 border-b border-gray-200 bg-[#D9D9D9] grid grid-cols-10 items-center text-center">

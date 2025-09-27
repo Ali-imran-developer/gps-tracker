@@ -110,11 +110,7 @@ const AddComments = ({ viewDialogOpen, setViewDialogOpen, moreItem }) => {
               </Select>
             </div>
 
-            <Button
-              type="submit"
-              disabled={isButtonDisabled}
-              className="w-full text-white px-4 py-2"
-            >
+            <Button type="submit" disabled={isButtonDisabled} className="w-full text-white bg-[#04003A] px-4 py-2 rounded-none">
               {isAdding ? <Loader2 className="w-6 h-6 animate-spin" /> : "Add"}
             </Button>
           </form>

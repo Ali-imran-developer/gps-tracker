@@ -3,6 +3,9 @@
 @tailwind utilities;
 
 /* GPS Tracker Design System - Professional tracking interface */
+.gm-ui-hover-effect {
+  display: none !important;
+}
 
 @layer base {
   :root {
@@ -127,7 +130,3 @@
     @apply bg-background text-foreground;
   }
 }
-
-/* .gm-ui-hover-effect {
-  display: none !important;
-} */

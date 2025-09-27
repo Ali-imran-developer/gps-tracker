@@ -62,13 +62,14 @@ const AppliedZone = ({
         </div>
       ) : selectedZones?.length > 0 ? (
         <div className="w-full max-w-md mx-auto border rounded-none shadow-sm bg-white font-sans text-xs">
+          <div className="grid grid-cols-2 w-full border-b bg-gray-100 text-gray-700 font-semibold text-xs">
+            <div className="ps-12 py-2 border-r">Name</div>
+            <div className="px-3 py-2">Description</div>
+          </div>
           {selectedZones?.map((item: any, index: number) => {
             return (
-              <div
-                key={index}
-                className="flex flex-col cursor-pointer hover:bg-gray-50"
-              >
-                <div className={`flex items-center gap-3 ps-2 py-1`}>
+              <div key={index} className="flex items-center gap-3 ps-2 py-1 border-b border-gray-200 hover:bg-gray-50">
+                {/* <div className={`flex items-center gap-3 ps-2 py-1`}> */}
                   <input
                     type="checkbox"
                     className="w-3 h-3 accent-blue-600"
@@ -78,20 +79,16 @@ const AppliedZone = ({
                     onClick={(e) => e.stopPropagation()}
                   />
 
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-800 truncate">
-                      {item?.id ?? ""}
-                    </div>
-                    <div className="text-[10px] text-gray-600 truncate">
-                      {item?.name ?? ""}
-                    </div>
-                  </div>
-
-                  <div className="flex-1 text-right text-wrap shrink-0">
-                    <div className="text-[11px] font-medium text-gray-800">
-                      {item?.description ?? ""}
-                    </div>
-                  </div>
+                      <div className="grid grid-cols-2 w-full gap-0 text-xs">
+                        <div className="px-3 py-2 border-r w-full break-words">
+                          <div className="font-medium text-gray-800">
+                            {item?.name ?? ""}
+                          </div>
+                        </div>
+                        <div className="px-3 py-2 w-full break-words">
+                          <div className="text-gray-600">{item?.description ?? ""}</div>
+                        </div>
+                      </div>
 
                   <div className="shrink-0">
                     <button
@@ -102,7 +99,7 @@ const AppliedZone = ({
                       <MoreVertical className="w-4 h-4 text-gray-600" />
                     </button>
                   </div>
-                </div>
+                {/* </div> */}
               </div>
             );
           })}

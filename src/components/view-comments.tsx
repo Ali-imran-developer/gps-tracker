@@ -20,7 +20,7 @@ const ViewComments = ({
   return (
     <div>
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-auto">
+        <DialogContent className="max-w-2xl max-h-[calc(100vh-100px)]">
           <DialogHeader>
             <DialogTitle>View Comments</DialogTitle>
           </DialogHeader>
@@ -31,7 +31,7 @@ const ViewComments = ({
               <span className="ml-2">Loading comments...</span>
             </div>
           ) : (
-            <div className="text-xs border rounded-md overflow-hidden mb-4">
+            <div className="text-xs border rounded-md mb-4 overflow-x-auto">
               <div className="flex bg-gray-100 font-medium border-b">
                 <span className="w-1/6 p-1 border-r">IMEI</span>
                 <span className="w-1/6 p-1 border-r">Vehicle</span>
@@ -40,50 +40,33 @@ const ViewComments = ({
                 <span className="w-1/6 p-1">Date Time</span>
               </div>
 
-              <div className="max-h-64 overflow-y-auto">
-                {Array.isArray(data) && data?.length > 0 ? (
-                  data?.map((item, index) => (
-                    <div
-                      key={index}
-                      className="flex border-b last:border-b-0 hover:bg-gray-50"
-                    >
-                      <span
-                        className="w-1/6 p-1 border-r truncate"
-                        title={item.imei}
-                      >
-                        {item.imei}
-                      </span>
-                      <span
-                        className="w-1/6 p-1 border-r truncate"
-                        title={item.vehicle}
-                      >
-                        {item.vehicle}
-                      </span>
-                      <span
-                        className="w-1/6 p-1 border-r truncate"
-                        title={item.alerttype}
-                      >
-                        {item.alerttype}
-                      </span>
-                      <span
-                        className="w-2/6 p-1 border-r truncate"
-                        title={item.comments}
-                      >
-                        {item.comments}
-                      </span>
-                      <span
-                        className="w-1/6 p-1 truncate"
-                        title={item.DateTime}
-                      >
-                        {item.DateTime}
-                      </span>
+              <div className="overflow-x-auto">
+                <div className="min-w-[900px]">
+                  {Array.isArray(data) && data?.length > 0 ? ( data?.map((item, index) => (
+                    <div key={index} className="flex border-b last:border-b-0 hover:bg-gray-50">
+                        <span className="w-1/6 pe-1.5 py-1 border-r" title={item.imei}>
+                          {item.imei}
+                        </span>
+                        <span className="w-1/6 p-1 border-r" title={item.vehicle}>
+                          {item.vehicle}
+                        </span>
+                        <span className="w-1/6 p-1 border-r" title={item.alerttype}>
+                          {item.alerttype}
+                        </span>
+                        <span className="w-2/6 p-1 border-r" title={item.comments}>
+                          {item.comments}
+                        </span>
+                        <span className="w-1/6 p-1" title={item.DateTime}>
+                          {item.DateTime}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex justify-center items-center p-4 text-gray-500">
+                      No comments available
                     </div>
-                  ))
-                ) : (
-                  <div className="flex justify-center items-center p-4 text-gray-500">
-                    No comments available
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           )}

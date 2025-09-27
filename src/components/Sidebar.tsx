@@ -9,6 +9,7 @@ import PlacesTable from "./Places-table";
 import { useSelector } from "react-redux";
 import { useZones } from "@/hooks/zones-hook";
 import CreateGeofence from "./create-geofence";
+import { ensureArray } from "@/helper-functions/use-formater";
 
 interface SidebarProps {
   selectedItems: any[];
@@ -46,6 +47,7 @@ const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsDa
   const { isLoading, handleGetAllZones } = useZones(deviceId);
   const [open, setOpen] = useState(false);
   const [editingZone, setEditingZone] = useState<any | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const mergedEventsData = eventsData?.map((event: any) => {
     const device = geoFenceData?.find((d: any) => Number(d?.id) === Number(event?.deviceid));
@@ -79,8 +81,36 @@ const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsDa
     }
   }, [selectedTab]);
 
+  const mergedData = geoFenceData?.map((device: any) => {
+    const track = trackLocations?.find((t: any) => t?.deviceId === device?.id);
+    return { ...device, ...track };
+  });
+
+  const ignitionOff = mergedData?.filter((item: any) => item?.attribute?.ignition === false);
+  const idleDevices = mergedData?.filter((item: any) => item?.attribute?.ignition === true && Number(item?.speed) === 0);
+  const moveDevices = mergedData?.filter((item: any) => item?.attribute?.ignition === true && Number(item?.speed) > 0);
+  const offlineDevices = mergedData?.filter((item: any) => item?.status === "offline");
+  const disabledDevices = mergedData?.filter((item: any) => item?.disabled === "True");
+
+  const StatusTabs = [
+    { label: "Move", count: moveDevices?.length, color: "bg-green-500" },
+    { label: "Idle", count: idleDevices?.length, color: "bg-yellow-400" },
+    { label: "Stop", count: ignitionOff?.length, color: "bg-red-500" },
+    { label: "Offline", count: offlineDevices?.length, color: "bg-blue-700" },
+    { label: "Disable", count: disabledDevices?.length, color: "bg-purple-400" },
+    { label: "Total", count: mergedData?.length, color: "bg-sky-400" },
+  ];
+
   return (
     <div className="w-80 bg-card border-r border-border flex flex-col h-full">
+      <div className="flex min-h-10 text-white rounded-none font-semibold text-center overflow-hidden">
+        {ensureArray(StatusTabs)?.map((tab, index) => (
+          <button key={index} onClick={() => handleTabClick(tab?.label)} className={cn("flex-1 px-1 rounded-none transition-colors", tab?.color)}>
+            <div className="text-xs">{tab?.count ?? 0}</div>
+            <div className="text-[10px]">{tab?.label ?? ""}</div>
+          </button>
+        ))}
+      </div>
       <div className="flex border-b border-border bg-[#D9D9D9]">
         {tabs?.map((tab) => (
           <button
@@ -100,13 +130,15 @@ const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsDa
 
       {selectedTab === "Objects" && (
         <div className="flex-1 flex flex-col">
-          <div className="py-4 flex items-center gap-2 border-b border-border">
+          <div className="py-2 flex items-center gap-2 border-b border-border">
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search"
-                  className="pl-9 bg-[#04003A] placeholder:text-gray-300 rounded-none"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9 bg-[#04003A] text-white placeholder:text-gray-300 rounded-none focus-visible:ring-1 focus-visible:ring-blue-500"
                 />
               </div>
             </div>
@@ -158,13 +190,14 @@ const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsDa
             geoFenceData={geoFenceData}
             trackLocations={trackLocations}
             onSelectionChange={onSelectionChange}
+            searchTerm={searchTerm}
           />
         </div>
       )}
 
       {selectedTab === "Events" && (
         <div className="flex-1 flex flex-col">
-          <div className="py-4 flex items-center gap-2 border-b border-border">
+          <div className="py-2 flex items-center gap-2 border-b border-border">
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />

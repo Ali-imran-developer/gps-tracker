@@ -10,17 +10,8 @@ import AuthController from "@/controllers/authController";
 const GPSTracker = () => {
   const [currentPage, setCurrentPage] = useState<"main" | "dashboard">("main");
   const [activeTab, setActiveTab] = useState("Objects");
-  const {
-    cities,
-    isLoading,
-    handleCheckalldevices,
-    handleGetTrackLocations,
-    handleGetEventsData,
-    handleGeofenceCities,
-  } = useGeoFence();
-  const { geoFenceData, trackLocations, eventsData } = useSelector(
-    (state: any) => state.GeoFence
-  );
+  const { cities, isLoading, handleCheckalldevices, handleGetTrackLocations, handleGetEventsData } = useGeoFence();
+  const { geoFenceData, trackLocations, eventsData } = useSelector((state: any) => state.GeoFence);
   const session = AuthController.getSession();
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
   const [moreItem, setMoreItem] = useState<any | null>(null);
