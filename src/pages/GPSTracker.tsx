@@ -6,6 +6,7 @@ import Dashboard from "@/components/Dashboard";
 import { useGeoFence } from "@/hooks/geoFecnce-hook";
 import { useSelector } from "react-redux";
 import AuthController from "@/controllers/authController";
+import useWebSocket from "@/hooks/useWebSocket";
 
 const GPSTracker = () => {
   const [currentPage, setCurrentPage] = useState<"main" | "dashboard">("main");
@@ -18,6 +19,11 @@ const GPSTracker = () => {
   const [page, setPage] = useState(1);
   const totalPages = 50;
   const [localEvents, setLocalEvents] = useState<any[]>([]);
+
+  const wsRef = useWebSocket("ws://live.farostestip.online/api/socket", (data) => {
+    console.log("📩 New WS data:", data);
+  });
+  console.log(wsRef, "WebSocket Connection:");
 
   const updateEventProcess = (id: string, process: "0" | "1") => {
     setLocalEvents((prev) => {
@@ -48,9 +54,8 @@ const GPSTracker = () => {
   };
 
   useEffect(() => {
-    // handleGetEventsData({ page, userid: session?.user?.id });
     handleCheckalldevices(queryParams);
-    // handleGetTrackLocations(queryParams);
+
   }, [page]);
 
   useEffect(() => {
@@ -61,10 +66,7 @@ const GPSTracker = () => {
         page,
         userid: session.user.id,
       });
-      const trackResponse = await handleGetTrackLocations(queryParams);
-      // optional optimization: only update if data changed
-      // if (!isEqual(eventsResponse, eventsData)) dispatch(setEventsData(eventsResponse));
-      // if (!isEqual(trackResponse, trackLocations)) dispatch(setTrackLocations(trackResponse));
+      await handleGetTrackLocations(queryParams);
     };
     fetchData();
     const interval = setInterval(() => {
