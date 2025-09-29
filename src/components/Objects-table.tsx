@@ -23,6 +23,7 @@ interface ObjectTableProps {
   searchTerm: string;
 }
 
+const STORAGE_KEY = "selectedItems";
 const ObjectsTable = ({
   objectsLoader,
   geoFenceData,
@@ -43,6 +44,18 @@ const ObjectsTable = ({
     const track = trackLocations?.find((t: any) => t?.deviceId === device?.id);
     return { ...device, ...track };
   });
+
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      setSelectedItems(JSON.parse(saved));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedItems));
+
+  }, [selectedItems]);
 
   const filteredData = mergedData?.filter((item: any) => {
     if (!searchTerm) return true;
@@ -85,6 +98,15 @@ const ObjectsTable = ({
     );
     onSelectionChange?.(selectedObjects ?? []);
   };
+
+  useEffect(() => {
+    if (!mergedData) return;
+    const validKeys = mergedData.map((item: any, idx: number) => getRowKey(item, idx));
+    const filteredSelections = selectedItems.filter((key) => validKeys.includes(key));
+    if (filteredSelections.length !== selectedItems.length) {
+      setSelectedItems(filteredSelections);
+    }
+  }, [mergedData]);
 
   return (
     <div className="w-full max-w-md mx-auto border border-gray-300 rounded-md shadow-sm bg-white font-sans">

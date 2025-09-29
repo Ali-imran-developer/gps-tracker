@@ -6,10 +6,14 @@ import { APP_KEY, COOKIE_SECRET } from "../config/constants";
 import store from "../store";
 import { apiRequest } from "./apiController";
 
+const sessionUrl = import.meta.env.VITE_SESSION_URL;
 class AuthController {
   static userLogin(data: Login) {
     const queryString = `checkuserloginlive.php?user=${data?.user}&pass=${data?.pass}`;
     return apiRequest("get", `/${queryString}`);
+  }
+  static sessionApi(data: Login) {
+    return apiRequest("post", `${sessionUrl}/api/session?email=${data?.user}&password=${data?.pass}`);
   }
 
   static getSession = () => {

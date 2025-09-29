@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import LoginSchema from "@/validators/login-schema";
 import { useAuth } from "@/hooks/auth-hook";
+import AuthController from "@/controllers/authController";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -21,6 +22,7 @@ const Login = () => {
       try{
         console.log("Login Data:", values);
         await handlePrimaryLogin(values);
+        await AuthController.sessionApi(values);
       }catch(error){
         console.log(error);
       }
