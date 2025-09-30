@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   MoreVertical,
   ChevronDown,
@@ -14,6 +14,7 @@ import {
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import formatDate from "@/utils/format-date";
+import { ensureArray } from "@/helper-functions/use-formater";
 
 interface ObjectTableProps {
   objectsLoader: boolean;
@@ -35,15 +36,19 @@ const ObjectsTable = ({
   const [expandedRows, setExpandedRows] = useState<string[]>([]);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
-  const getRowKey = (item: any, index: number) => `${item.id}-${index}`;
+  const getRowKey = (item: any) => {
+    return item?.id?.toString() || String(item.deviceId) || Math.random().toString();
+  };
   const toggleExpand = (rowKey: string) => {
     setExpandedRows((prev) => prev.includes(rowKey) ? prev.filter((k) => k !== rowKey) : [...prev, rowKey]);
   };
 
-  const mergedData = geoFenceData?.map((device: any) => {
-    const track = trackLocations?.find((t: any) => t?.deviceId === device?.id);
-    return { ...device, ...track };
-  });
+  const mergedData = useMemo(() => {
+    return geoFenceData?.map((device: any) => {
+      const track = trackLocations?.find((t: any) => t?.deviceId === device?.id);
+      return { ...device, ...track };
+    });
+  }, [geoFenceData, trackLocations]);
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -57,13 +62,23 @@ const ObjectsTable = ({
 
   }, [selectedItems]);
 
-  const filteredData = mergedData?.filter((item: any) => {
-    if (!searchTerm) return true;
-    const lower = searchTerm.toLowerCase();
-    return Object.values(item).some((val) =>
-      String(val).toLowerCase().includes(lower)
-    );
-  });
+//   cookie_params = CookieParameters(
+//     secure=True,
+//     samesite="none",
+//     max_age=2592000,
+//     domain=".shopilam.com"
+//   )
+
+  const filteredData = useMemo(() => {
+    if (!mergedData) return null;
+    return mergedData.filter((item: any) => {
+      if (!searchTerm) return true;
+      const lower = searchTerm.toLowerCase();
+      return Object.values(item).some((val) =>
+        String(val).toLowerCase().includes(lower)
+      );
+    });
+  }, [mergedData, searchTerm]);
 
   const icons = { car: Car, truck: Truck, motorcycle: Bike, person: User };
 
@@ -76,9 +91,7 @@ const ObjectsTable = ({
       updated = selectedItems.filter((k) => k !== rowKey);
     }
     setSelectedItems(updated);
-    const selectedObjects = mergedData?.filter((item: any, idx: number) =>
-      updated.includes(getRowKey(item, idx))
-    );
+    const selectedObjects = ensureArray(mergedData)?.filter((item: any) => updated.includes(getRowKey(item)));
     onSelectionChange?.(selectedObjects ?? []);
   };
 
@@ -86,22 +99,18 @@ const ObjectsTable = ({
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     let updated: string[];
     if (e.target.checked) {
-      updated = mergedData.map((item: any, idx: number) =>
-        getRowKey(item, idx)
-      );
+      updated = ensureArray(mergedData)?.map((item: any, idx: number) => getRowKey(item));
     } else {
       updated = [];
     }
     setSelectedItems(updated);
-    const selectedObjects = mergedData?.filter((item: any, idx: number) =>
-      updated.includes(getRowKey(item, idx))
-    );
+    const selectedObjects = ensureArray(mergedData)?.filter((item: any, idx: number) => updated.includes(getRowKey(item)));
     onSelectionChange?.(selectedObjects ?? []);
   };
 
   useEffect(() => {
     if (!mergedData) return;
-    const validKeys = mergedData.map((item: any, idx: number) => getRowKey(item, idx));
+    const validKeys = ensureArray(mergedData)?.map((item: any) => getRowKey(item));
     const filteredSelections = selectedItems.filter((key) => validKeys.includes(key));
     if (filteredSelections.length !== selectedItems.length) {
       setSelectedItems(filteredSelections);
@@ -136,7 +145,7 @@ const ObjectsTable = ({
           <div className="flex flex-col divide-y">
             {filteredData?.map((item: any, index: number) => {
               const Icon = icons[item?.category];
-              const rowKey = getRowKey(item, index);
+              const rowKey = getRowKey(item);
               const isChecked = selectedItems.includes(rowKey);
               const isExpanded = expandedRows.includes(rowKey);
 
@@ -145,7 +154,7 @@ const ObjectsTable = ({
                   <div className={`flex items-center justify-between py-1 ps-2 cursor-pointer  ${ item?.disabled === "True" ? "bg-gray-300 hover:bg-gray-300" : ""}`} onClick={() => toggleExpand(rowKey)}>
                     <input
                       type="checkbox"
-                      checked={isChecked}
+                      checked={selectedItems.includes(rowKey)}
                       onChange={(e) => handleCheckboxChange(e, rowKey, item)}
                       onClick={(e) => e.stopPropagation()}
                       className="w-3 h-3 accent-blue-600 mr-2"
