@@ -29,7 +29,7 @@ const App = () => {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-          <Route path="/websocket" element={<ProtectedRoute><WebSocket /></ProtectedRoute>} />
+          <Route path="/websocket" element={<WebSocket />} />
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
