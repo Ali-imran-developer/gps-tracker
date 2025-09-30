@@ -18,47 +18,47 @@ const GPSTracker = () => {
   const [page, setPage] = useState(1);
   const totalPages = 50;
   const [localEvents, setLocalEvents] = useState<any[]>([]);
-  // const [socket, setSocket] = useState<WebSocket | null>(null);
-  // const [messages, setMessages] = useState<string[]>([]);
+  const [socket, setSocket] = useState<WebSocket | null>(null);
+  const [messages, setMessages] = useState<string[]>([]);
 
-  // useEffect(() => {
-  //   const login = async () => {
-  //     try {
-  //       const ws = new WebSocket("ws://live.farostestip.online/api/socket");
-  //       ws.onopen = () => {
-  //         console.log("✅ WebSocket connected");
-  //         ws.send("Hello from frontend!");
-  //       };
-  //       ws.onmessage = (event) => {
-  //         console.log("📩 Message:", event.data);
-  //         setMessages((prev) => [...prev, event.data]);
-  //       };
-  //       ws.onclose = () => {
-  //         console.log("❌ WebSocket closed");
-  //       };
-  //       ws.onerror = (err) => {
-  //         console.error("⚠️ WebSocket error:", err);
-  //       };
-  //       setSocket(ws);
-  //     } catch (error) {
-  //       console.error("Login or WebSocket error:", error);
-  //     }
-  //   };
-  //   login();
-  //   return () => {
-  //     if (socket) {
-  //       socket.close();
-  //     }
-  //   };
-  // }, []);
+  useEffect(() => {
+    const login = async () => {
+      try {
+        const ws = new WebSocket("ws://live.farostestip.online/api/socket");
+        ws.onopen = () => {
+          console.log("✅ WebSocket connected");
+          ws.send("Hello from frontend!");
+        };
+        ws.onmessage = (event) => {
+          console.log("📩 Message:", event.data);
+          setMessages((prev) => [...prev, event.data]);
+        };
+        ws.onclose = () => {
+          console.log("❌ WebSocket closed");
+        };
+        ws.onerror = (err) => {
+          console.error("⚠️ WebSocket error:", err);
+        };
+        setSocket(ws);
+      } catch (error) {
+        console.error("Login or WebSocket error:", error);
+      }
+    };
+    login();
+    return () => {
+      if (socket) {
+        socket.close();
+      }
+    };
+  }, []);
 
-  // const cookies = document.cookie;
-  // function getCookie(name: any) {
-  //   return document.cookie.split('; ').find(row => row.startsWith(name + '='))?.split('=')[1];
-  // }
-  // console.log(getCookie('JSESSIONID'), "Cookie");
-  // console.log("messages", messages);
-  console.log("selectedItems", selectedItems);
+  const cookies = document.cookie;
+  function getCookie(name: any) {
+    return document.cookie.split('; ').find(row => row.startsWith(name + '='))?.split('=')[1];
+  }
+  console.log(getCookie('JSESSIONID'), "Cookie");
+  console.log("messages", messages);
+  // console.log("selectedItems", selectedItems);
 
   const updateEventProcess = (id: string, process: "0" | "1") => {
     setLocalEvents((prev) => {
