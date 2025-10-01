@@ -209,6 +209,22 @@ const MapView = ({
     }
   }, [selectedItems]);
 
+  useEffect(() => {
+    if (historyData && historyData?.length > 0 && mapRef?.current) {
+      const bounds = new google.maps.LatLngBounds();
+      ensureArray(historyData)?.forEach((point: any) => {
+        const lat = parseFloat(point?.latitude);
+        const lng = parseFloat(point?.longitude);
+        if (isFinite(lat) && isFinite(lng)) {
+          bounds.extend({ lat, lng });
+        }
+      });
+      if (!bounds.isEmpty()) {
+        mapRef?.current?.fitBounds(bounds);
+      }
+    }
+  }, [historyData]);
+
   const handleControlClick = (controlId: string) => {
     if (controlId === "dashboard") {
       onNavigate?.("dashboard");
@@ -340,7 +356,7 @@ const MapView = ({
             gestureHandling: "greedy",
           }}
         >
-          {/* {selectedItems?.map((item, idx) => {
+          {selectedItems?.map((item, idx) => {
             if (item?.area?.startsWith("CIRCLE")) {
               const match = item.area.match(
                 /CIRCLE\s*\(\s*([\d.-]+)\s+([\d.-]+)\s*,\s*([\d.-]+)\s*\)/
@@ -407,9 +423,8 @@ const MapView = ({
                 )}
               </React.Fragment>
             );
-          })} */}
+          })}
 
-          {console.log("historyData inside map:", historyData)as any}
           {historyData && historyData.length > 0 && (
             <Polyline
               path={ensureArray(historyData)?.map((point: any) => ({
@@ -417,39 +432,23 @@ const MapView = ({
                 lng: parseFloat(point.longitude),
               }))}
               options={{
-                strokeColor: "#FF0000",
+                strokeColor: "#0A5C36",
                 strokeOpacity: 0.8,
                 strokeWeight: 3,
                 icons: [
                   {
                     icon: {
                       path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                      strokeColor: "#FF0000",
+                      scale: 3,
                     },
+                    // color: "",
                     offset: "100%",
                     repeat: "100px",
                   },
                 ],
               }}
             />
-          )}
-
-          {historyData?.length > 0 && (
-            <>
-              <Marker
-                position={{
-                  lat: parseFloat(historyData[0].latitude),
-                  lng: parseFloat(historyData[0].longitude),
-                }}
-                label="S"
-              />
-              <Marker
-                position={{
-                  lat: parseFloat(historyData[historyData.length - 1].latitude),
-                  lng: parseFloat(historyData[historyData.length - 1].longitude),
-                }}
-                label="E"
-              />
-            </>
           )}
         </GoogleMap>
       </div>

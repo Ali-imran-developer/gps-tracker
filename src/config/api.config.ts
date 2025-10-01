@@ -1,5 +1,4 @@
 import axios from "axios";
-import AuthController from "@/controllers/authController";
 import { logout } from "@/utils/auth";
 export const APP_BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -9,10 +8,10 @@ export const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use((config) => {
-    const persistData = AuthController.getSession();
-    if (persistData?.token && !config.headers.Authorization) {
-      config.headers[`Authorization`] = `Bearer ${persistData.token}`;
-    }
+    // const persistData = AuthController.getSession();
+    // if (persistData?.token && !config.headers.Authorization) {
+    //   config.headers[`Authorization`] = `Bearer ${persistData.token}`;
+    // }
 
     return config;
   },

@@ -6,8 +6,8 @@ import Dashboard from "@/components/Dashboard";
 import { useGeoFence } from "@/hooks/geoFecnce-hook";
 import { useDispatch, useSelector } from "react-redux";
 import AuthController from "@/controllers/authController";
-import { useWebSocket } from "@/hooks/useWebSocket";
-import { webSocketUrl } from "@/config/constants";
+import { useAuthWebSocket } from "@/hooks/useWebSocket";
+// import { webSocketUrl } from "@/config/constants";
 import { ensureArray } from "@/helper-functions/use-formater";
 import { setGeoFenceData, setTrackLocations } from "@/store/slices/geofenceSlice";
 
@@ -24,7 +24,8 @@ const GPSTracker = () => {
   const [localEvents, setLocalEvents] = useState<any[]>([]);
   const [historyData, setHistoryData] = useState([]);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const { messages } = useWebSocket(webSocketUrl);
+  // const { messages } = useWebSocket(webSocketUrl);
+  const { messages } = useAuthWebSocket();
   const dispatch = useDispatch();
   console.log("messages", messages);
 
