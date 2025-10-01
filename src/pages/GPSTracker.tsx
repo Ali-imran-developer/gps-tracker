@@ -38,16 +38,20 @@ const GPSTracker = () => {
           const update = ensureArray(updatedDevices)?.find((d: any) => d?.name === device?.name);
           return update ? { ...device, ...update } : device;
         });
-        dispatch(setGeoFenceData(mergedDevices));
+        if (JSON.stringify(mergedDevices) !== JSON.stringify(geoFenceData)) {
+          dispatch(setGeoFenceData(mergedDevices));
+        }
       }
 
-      if (latestMessage?.positions && Array.isArray(latestMessage?.positions)) {
-        const updatedPositions = latestMessage?.positions;
+      if (latestMessage?.positions && Array.isArray(latestMessage.positions)) {
+        const updatedPositions = latestMessage.positions;
         const mergedPositions = ensureArray(trackLocations)?.map((pos: any) => {
-          const update = ensureArray(updatedPositions)?.find((p: any) => p?.deviceId === pos?.deviceId);
+          const update = updatedPositions.find((p: any) => p?.deviceId === pos?.deviceId);
           return update ? { ...pos, ...update } : pos;
         });
-        dispatch(setTrackLocations(mergedPositions));
+        if (JSON.stringify(mergedPositions) !== JSON.stringify(trackLocations)) {
+          dispatch(setTrackLocations(mergedPositions));
+        }
       }
     } catch (err) {
       console.error("❌ Failed to parse WebSocket message:", err);

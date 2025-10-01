@@ -32,7 +32,7 @@ export const useWebSocket = (url: string) => {
       ws.close();
       wsRef.current = null;
     };
-  }, [url]);
+  }, []);
 
   return { messages, isConnected };
 };
