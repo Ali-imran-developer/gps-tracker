@@ -39,6 +39,7 @@ const ObjectsTable = ({
   const getRowKey = (item: any) => {
     return item?.id?.toString() || String(item.deviceId) || Math.random().toString();
   };
+
   const toggleExpand = (rowKey: string) => {
     setExpandedRows((prev) => prev.includes(rowKey) ? prev.filter((k) => k !== rowKey) : [...prev, rowKey]);
   };
@@ -62,20 +63,13 @@ const ObjectsTable = ({
 
   }, [selectedItems]);
 
-//   cookie_params = CookieParameters(
-//     secure=True,
-//     samesite="none",
-//     max_age=2592000,
-//     domain=".shopilam.com"
-//   )
-
   const filteredData = useMemo(() => {
     if (!mergedData) return null;
-    return mergedData.filter((item: any) => {
+    return ensureArray(mergedData)?.filter((item: any) => {
       if (!searchTerm) return true;
-      const lower = searchTerm.toLowerCase();
-      return Object.values(item).some((val) =>
-        String(val).toLowerCase().includes(lower)
+      const lower = searchTerm?.toLowerCase();
+      return Object.values(item)?.some((val) =>
+        String(val)?.toLowerCase()?.includes(lower)
       );
     });
   }, [mergedData, searchTerm]);
@@ -111,11 +105,20 @@ const ObjectsTable = ({
   useEffect(() => {
     if (!mergedData) return;
     const validKeys = ensureArray(mergedData)?.map((item: any) => getRowKey(item));
-    const filteredSelections = selectedItems.filter((key) => validKeys.includes(key));
-    if (filteredSelections.length !== selectedItems.length) {
+    const filteredSelections = ensureArray(selectedItems)?.filter((key) => validKeys?.includes(key));
+    if (filteredSelections?.length !== selectedItems?.length) {
       setSelectedItems(filteredSelections);
     }
   }, [mergedData]);
+
+  const getDeviceColor = (item: any) => {
+    if (item?.status === "offline") return "text-blue-700";
+    if (item?.disabled === "True") return "text-purple-400";
+    if (item?.attribute?.ignition === false) return "text-red-500";
+    if (item?.attribute?.ignition === true && Number(item?.speed) > 0) return "text-green-600";
+    if (item?.attribute?.ignition === true && Number(item?.speed) === 0) return "text-yellow-400";
+    return "text-black";
+  };
 
   return (
     <div className="w-full max-w-md mx-auto border border-gray-300 rounded-md shadow-sm bg-white font-sans">
@@ -130,11 +133,6 @@ const ObjectsTable = ({
             />
           </div>
           <Button variant="outline" onClick={() => setIsGroupExpanded(!isGroupExpanded)} className="flex items-center gap-1 text-xs text-gray-700 bg-transparent border-none h-auto p-0">
-            {/* {isGroupExpanded ? (
-              <ChevronDown className="w-3 h-3" />
-            ) : (
-              <ChevronRight className="w-3 h-3" />
-            )} */}
             <span>Regrouped({filteredData?.length})</span>
           </Button>
         </div>
@@ -151,10 +149,10 @@ const ObjectsTable = ({
 
               return (
                 <div key={item?.id} className="flex flex-col">
-                  <div className={`flex items-center justify-between py-1 ps-2 cursor-pointer  ${ item?.disabled === "True" ? "bg-gray-300 hover:bg-gray-300" : ""}`} onClick={() => toggleExpand(rowKey)}>
+                  <div className={`flex items-center justify-between py-1 ps-2 cursor-pointer ${item?.disabled === "True" ? "bg-gray-300 hover:bg-gray-300" : ""}`} onClick={() => toggleExpand(rowKey)}>
                     <input
                       type="checkbox"
-                      checked={selectedItems.includes(rowKey)}
+                      checked={selectedItems?.includes(rowKey)}
                       onChange={(e) => handleCheckboxChange(e, rowKey, item)}
                       onClick={(e) => e.stopPropagation()}
                       className="w-3 h-3 accent-blue-600 mr-2"
@@ -162,13 +160,7 @@ const ObjectsTable = ({
 
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       {Icon && (
-                        <Icon
-                          className={`w-4 h-4 shrink-0 ${
-                            item?.status === "offline"
-                              ? "text-red-600"
-                              : "text-green-600"
-                          }`}
-                        />
+                        <Icon className={`w-4 h-4 shrink-0 ${getDeviceColor(item)}`} />
                       )}
                       <div className="truncate">
                         <div className="text-xs font-medium text-gray-900 truncate">

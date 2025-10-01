@@ -4,8 +4,12 @@ import Sidebar from "@/components/Sidebar";
 import MapView from "@/components/MapView";
 import Dashboard from "@/components/Dashboard";
 import { useGeoFence } from "@/hooks/geoFecnce-hook";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import AuthController from "@/controllers/authController";
+import { useWebSocket } from "@/hooks/useWebSocket";
+import { webSocketUrl } from "@/config/constants";
+import { ensureArray } from "@/helper-functions/use-formater";
+import { setGeoFenceData, setTrackLocations } from "@/store/slices/geofenceSlice";
 
 const GPSTracker = () => {
   const [currentPage, setCurrentPage] = useState<"main" | "dashboard">("main");
@@ -18,55 +22,45 @@ const GPSTracker = () => {
   const [page, setPage] = useState(1);
   const totalPages = 50;
   const [localEvents, setLocalEvents] = useState<any[]>([]);
-  const [socket, setSocket] = useState<WebSocket | null>(null);
-  const [messages, setMessages] = useState<string[]>([]);
+  const [historyData, setHistoryData] = useState([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const { messages } = useWebSocket(webSocketUrl);
+  const dispatch = useDispatch();
+  console.log("messages", messages);
 
   useEffect(() => {
-    const login = async () => {
-      try {
-        const ws = new WebSocket("ws://live.farostestip.online/api/socket");
-        ws.onopen = () => {
-          console.log("✅ WebSocket connected");
-          ws.send("Hello from frontend!");
-        };
-        ws.onmessage = (event) => {
-          console.log("📩 Message:", event.data);
-          setMessages((prev) => [...prev, event.data]);
-        };
-        ws.onclose = () => {
-          console.log("❌ WebSocket closed");
-        };
-        ws.onerror = (err) => {
-          console.error("⚠️ WebSocket error:", err);
-        };
-        setSocket(ws);
-      } catch (error) {
-        console.error("Login or WebSocket error:", error);
+    if (!messages?.length) return;
+    try {
+      const latestMessage = JSON.parse(messages[messages.length - 1]);
+      if (latestMessage?.devices && Array.isArray(latestMessage?.devices)) {
+        const updatedDevices = latestMessage.devices;
+        const mergedDevices = ensureArray(geoFenceData)?.map((device: any) => {
+          const update = ensureArray(updatedDevices)?.find((d: any) => d?.name === device?.name);
+          return update ? { ...device, ...update } : device;
+        });
+        dispatch(setGeoFenceData(mergedDevices));
       }
-    };
-    login();
-    return () => {
-      if (socket) {
-        socket.close();
-      }
-    };
-  }, []);
 
-  const cookies = document.cookie;
-  function getCookie(name: any) {
-    return document.cookie.split('; ').find(row => row.startsWith(name + '='))?.split('=')[1];
-  }
-  console.log(getCookie('JSESSIONID'), "Cookie");
-  console.log("messages", messages);
-  // console.log("selectedItems", selectedItems);
+      if (latestMessage?.positions && Array.isArray(latestMessage?.positions)) {
+        const updatedPositions = latestMessage?.positions;
+        const mergedPositions = ensureArray(trackLocations)?.map((pos: any) => {
+          const update = ensureArray(updatedPositions)?.find((p: any) => p?.deviceId === pos?.deviceId);
+          return update ? { ...pos, ...update } : pos;
+        });
+        dispatch(setTrackLocations(mergedPositions));
+      }
+    } catch (err) {
+      console.error("❌ Failed to parse WebSocket message:", err);
+    }
+  }, [messages, geoFenceData, trackLocations, dispatch]);
 
   const updateEventProcess = (id: string, process: "0" | "1") => {
     setLocalEvents((prev) => {
-      const exists = prev.find((e) => e.ID === id);
+      const exists = ensureArray(prev)?.find((e) => e.ID === id);
       if (exists) {
-        return prev.map((e) => (e.ID === id ? { ...e, process } : e));
+        return ensureArray(prev)?.map((e) => (e.ID === id ? { ...e, process } : e));
       }
-      const event = eventsData.find((e: any) => e.ID === id);
+      const event = ensureArray(eventsData)?.find((e: any) => e.ID === id);
       if (event) {
         return [...prev, { ...event, process }];
       }
@@ -74,8 +68,8 @@ const GPSTracker = () => {
     });
   };
 
-  const mergedEvents = eventsData?.map((e: any) => {
-    const override = localEvents.find((o) => o.ID === e.ID);
+  const mergedEvents = ensureArray(eventsData)?.map((e: any) => {
+    const override = ensureArray(localEvents)?.find((o) => o?.ID === e?.ID);
     return override ? { ...e, ...override } : e;
   });
 
@@ -83,35 +77,17 @@ const GPSTracker = () => {
     setSelectedItems(selected);
   };
 
-  const queryParams = {
-    username: session?.credentials?.user ?? "",
-    password: session?.credentials?.pass ?? "",
-  };
-
   useEffect(() => {
+    const queryParams = {
+      username: session?.credentials?.user ?? "",
+      password: session?.credentials?.pass ?? "",
+    };
+
     handleCheckalldevices(queryParams);
+    handleGetEventsData({ page, userid: session?.user?.id });
+    handleGetTrackLocations(queryParams);
 
   }, [page]);
-
-  useEffect(() => {
-    let isMounted = true;
-    const fetchData = async () => {
-      if (!session?.user) return;
-      const eventsResponse = await handleGetEventsData({
-        page,
-        userid: session.user.id,
-      });
-      await handleGetTrackLocations(queryParams);
-    };
-    fetchData();
-    const interval = setInterval(() => {
-      fetchData();
-    }, 20000);
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
-  }, [page, session?.user?.id]);
 
   const handlePrevious = () => {
     setPage((prev) => Math.max(prev - 1, 1));
@@ -157,6 +133,8 @@ const GPSTracker = () => {
           handleNext={handleNext}
           handlePrevious={handlePrevious}
           onMoreClick={setMoreItem}
+          setHistoryData={setHistoryData}
+          setHistoryOpen={setHistoryOpen}
         />
         <MapView
           cities={cities}
@@ -164,6 +142,9 @@ const GPSTracker = () => {
           selectedItems={selectedItems}
           onNavigate={handleNavigation}
           onProcessUpdate={updateEventProcess}
+          historyData={historyData}
+          historyOpen={historyOpen}
+          setHistoryOpen={setHistoryOpen}
         />
       </div>
     </div>

@@ -1,12 +1,38 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import { BarChart3, FileText, MapPin, Info, X, Loader2, EyeOff, Eye } from "lucide-react";
+import {
+  BarChart3,
+  FileText,
+  MapPin,
+  Info,
+  X,
+  Loader2,
+  EyeOff,
+  Eye,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { GoogleMap, LoadScript, Marker, Polygon, InfoWindow, Circle, OverlayView } from "@react-google-maps/api";
+import {
+  GoogleMap,
+  LoadScript,
+  Marker,
+  Polygon,
+  InfoWindow,
+  Circle,
+  OverlayView,
+  Polyline,
+} from "@react-google-maps/api";
 import { mapTools, topControls } from "@/data/map-view";
 import { useGeoFence } from "@/hooks/geoFecnce-hook";
 import { useSelector } from "react-redux";
-import { animateMarker, createSurroundingArea, formatDate, getCarIcon, parseWKT, renderInfoContent } from "@/helper-functions/use-mapview";
+import {
+  animateMarker,
+  createSurroundingArea,
+  formatDate,
+  getCarIcon,
+  parseWKT,
+  renderInfoContent,
+} from "@/helper-functions/use-mapview";
+import { ensureArray } from "@/helper-functions/use-formater";
 
 interface MapViewProps {
   cities: any[];
@@ -14,6 +40,9 @@ interface MapViewProps {
   selectedItems: any[];
   onNavigate?: (page: string) => void;
   onProcessUpdate: any;
+  historyData: any;
+  historyOpen: boolean;
+  setHistoryOpen?: (val: boolean) => void;
 }
 
 const containerStyle = {
@@ -21,7 +50,16 @@ const containerStyle = {
   height: "100%",
 };
 
-const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate }: MapViewProps) => {
+const MapView = ({
+  cities,
+  moreItem,
+  selectedItems,
+  onNavigate,
+  onProcessUpdate,
+  historyData,
+  historyOpen,
+  setHistoryOpen,
+}: MapViewProps) => {
   const [activeControl, setActiveControl] = useState<string | null>(null);
   const [center] = useState({ lat: 30.3384, lng: 71.2781 });
   const [zoom, setZoom] = useState(15);
@@ -44,7 +82,7 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
       const newPos = { lat, lng };
       if (markersRef.current.has(markerId)) {
         animateMarker(markersRef.current.get(markerId)!, newPos);
-      } else {        
+      } else {
         const marker = new google.maps.Marker({
           position: newPos,
           map: mapRef.current,
@@ -66,7 +104,11 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
       }
     });
     markersRef.current.forEach((marker, id) => {
-      if (!selectedItems.find((item, idx) => (item?.positionid || idx).toString() === id)) {
+      if (
+        !selectedItems.find(
+          (item, idx) => (item?.positionid || idx).toString() === id
+        )
+      ) {
         marker.setMap(null);
         markersRef.current.delete(id);
       }
@@ -77,7 +119,9 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
     if (selectedItems.length > 0 && mapRef.current) {
       selectedItems.forEach((item) => {
         if (item.area?.startsWith("CIRCLE")) {
-          const match = item.area.match(/CIRCLE\s*\(\s*([\d.-]+)\s+([\d.-]+)\s*,\s*([\d.-]+)\s*\)/);
+          const match = item.area.match(
+            /CIRCLE\s*\(\s*([\d.-]+)\s+([\d.-]+)\s*,\s*([\d.-]+)\s*\)/
+          );
           if (match) {
             const lat = parseFloat(match[1]);
             const lng = parseFloat(match[2]);
@@ -111,7 +155,9 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
       if (!firstItem?.area) return;
 
       if (firstItem.area.startsWith("CIRCLE")) {
-        const match = firstItem.area.match(/CIRCLE\s*\(\s*([\d.-]+)\s+([\d.-]+)\s*,\s*([\d.-]+)\s*\)/);
+        const match = firstItem.area.match(
+          /CIRCLE\s*\(\s*([\d.-]+)\s+([\d.-]+)\s*,\s*([\d.-]+)\s*\)/
+        );
         if (match) {
           const lat = parseFloat(match[1]);
           const lng = parseFloat(match[2]);
@@ -147,7 +193,7 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
         longi: rawLng,
         deviceid: deviceId,
       };
-      if(queryParams?.lati && queryParams?.longi && queryParams?.deviceid){
+      if (queryParams?.lati && queryParams?.longi && queryParams?.deviceid) {
         handleGetAddress(queryParams);
         setShowAddress(true);
       }
@@ -175,6 +221,7 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
     setShowDetailsPanel(false);
     setSelectedArea(null);
   };
+  console.log("historyData", historyData);
 
   return (
     <div className="flex-1 relative bg-accent min-h-screen overflow-hidden">
@@ -210,7 +257,8 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
               size="sm"
               className={cn(
                 "gap-2 bg-map-control hover:bg-map-control-hover",
-                activeControl === control.id && "bg-map-control-active text-white"
+                activeControl === control.id &&
+                  "bg-map-control-active text-white"
               )}
               onClick={() => handleControlClick(control.id)}
             >
@@ -227,10 +275,13 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
             key={tool.id}
             variant="secondary"
             size="sm"
-            className={cn("w-8 h-8 p-0 bg-map-control hover:bg-map-control-hover bg-[#04003A]",
+            className={cn(
+              "w-8 h-8 p-0 bg-map-control hover:bg-map-control-hover bg-[#04003A]",
               activeControl === tool.id && "bg-map-control-active text-white"
             )}
-            onClick={() => setActiveControl(activeControl === tool.id ? null : tool.id)}
+            onClick={() =>
+              setActiveControl(activeControl === tool.id ? null : tool.id)
+            }
           >
             <div className="w-4 h-4 mx-auto">
               <img
@@ -242,6 +293,35 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
           </Button>
         ))}
       </div>
+
+      {historyOpen && historyData && historyData?.length > 0 && (
+        <div className="absolute bottom-4 right-0 left-0 bg-white z-50 flex flex-col gap-1 min-h-[250px] max-h-[300px] overflow-y-auto">
+          <div className="sticky top-0 z-10 bg-[#04003A] text-white text-xs font-bold grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-2 p-2 border-b">
+            <span>DateTime</span>
+            <span>Ignition</span>
+            <span>Latitude</span>
+            <span>Longitude</span>
+            <span>Speed</span>
+            <span>Address</span>
+            <span>Total Distance</span>
+            <button className="absolute top-1 right-1 z-10" onClick={() => setHistoryOpen(false)}><X className="text-white" /></button>
+          </div>
+
+          {ensureArray(historyData)?.map((row: any, idx: number) => (
+            <div key={idx} className="hover:bg-gray-50 border-b border-gray-200 p-2 text-xs">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-2">
+                <span>{row?.serverTime ?? ""}</span>
+                <span>{row?.ignition ?? ""}</span>
+                <span>{row?.latitude ?? ""}</span>
+                <span>{row?.longitude ?? ""}</span>
+                <span>{row?.speed ?? ""} km/h</span>
+                <span>{row?.address ?? ""}</span>
+                <span>{row?.totalDistance ?? ""}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="w-full h-screen">
         <GoogleMap
@@ -257,12 +337,14 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
             scaleControl: false,
             rotateControl: false,
             fullscreenControl: false,
-            gestureHandling: 'greedy',
+            gestureHandling: "greedy",
           }}
         >
-          {selectedItems?.map((item, idx) => {
+          {/* {selectedItems?.map((item, idx) => {
             if (item?.area?.startsWith("CIRCLE")) {
-              const match = item.area.match(/CIRCLE\s*\(\s*([\d.-]+)\s+([\d.-]+)\s*,\s*([\d.-]+)\s*\)/);
+              const match = item.area.match(
+                /CIRCLE\s*\(\s*([\d.-]+)\s+([\d.-]+)\s*,\s*([\d.-]+)\s*\)/
+              );
               if (!match) return null;
               const lat = parseFloat(match[1]);
               const lng = parseFloat(match[2]);
@@ -309,39 +391,66 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate 
 
             return (
               <React.Fragment key={`vehicle-${item.positionid || idx}`}>
-                {/* <Marker
-                  position={{ lat, lng }}
-                  title={`${item.vehicle || "Vehicle"} - Speed: ${item.speed} km/h`}
-                  icon={getCarIcon()}
-                  onClick={() => {
-                    setActiveMarkers((prev) => {
-                      const newSet = new Set(prev);
-                      if (newSet.has(markerId)) {
-                        newSet.delete(markerId);
-                      } else {
-                        newSet.add(markerId);
-                      }
-                      return newSet;
-                    });
-                  }}
-                /> */}
                 {activeMarkers?.has(markerId) && (
-                <InfoWindow
-                  position={{ lat: lat + 0.0008, lng }}
-                  options={{
-                    disableAutoPan: false,
-                    pixelOffset: new google.maps.Size(0, -10),
-                    maxWidth: 250,
-                  }}
-                >
-                  <div className="custom-info-window p-0">
-                    {renderInfoContent(item, selectedItems.length > 1)}
-                  </div>
-                </InfoWindow>
+                  <InfoWindow
+                    position={{ lat: lat + 0.0008, lng }}
+                    options={{
+                      disableAutoPan: false,
+                      pixelOffset: new google.maps.Size(0, -10),
+                      maxWidth: 250,
+                    }}
+                  >
+                    <div className="custom-info-window p-0">
+                      {renderInfoContent(item, selectedItems.length > 1)}
+                    </div>
+                  </InfoWindow>
                 )}
               </React.Fragment>
             );
-          })}
+          })} */}
+
+          {console.log("historyData inside map:", historyData)as any}
+          {historyData && historyData.length > 0 && (
+            <Polyline
+              path={ensureArray(historyData)?.map((point: any) => ({
+                lat: parseFloat(point.latitude),
+                lng: parseFloat(point.longitude),
+              }))}
+              options={{
+                strokeColor: "#FF0000",
+                strokeOpacity: 0.8,
+                strokeWeight: 3,
+                icons: [
+                  {
+                    icon: {
+                      path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                    },
+                    offset: "100%",
+                    repeat: "100px",
+                  },
+                ],
+              }}
+            />
+          )}
+
+          {historyData?.length > 0 && (
+            <>
+              <Marker
+                position={{
+                  lat: parseFloat(historyData[0].latitude),
+                  lng: parseFloat(historyData[0].longitude),
+                }}
+                label="S"
+              />
+              <Marker
+                position={{
+                  lat: parseFloat(historyData[historyData.length - 1].latitude),
+                  lng: parseFloat(historyData[historyData.length - 1].longitude),
+                }}
+                label="E"
+              />
+            </>
+          )}
         </GoogleMap>
       </div>
     </div>

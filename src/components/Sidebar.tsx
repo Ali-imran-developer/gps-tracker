@@ -10,6 +10,8 @@ import { useSelector } from "react-redux";
 import { useZones } from "@/hooks/zones-hook";
 import CreateGeofence from "./create-geofence";
 import { ensureArray } from "@/helper-functions/use-formater";
+import HistoryTable from "./history-table";
+import { headerIcons, historyIcons } from "@/data/sidebar-icons-data";
 
 interface SidebarProps {
   selectedItems: any[];
@@ -25,19 +27,12 @@ interface SidebarProps {
   handleNext: () => void;
   handlePrevious: () => void;
   onMoreClick: (val: any) => void;
+  setHistoryData: any;
+  setHistoryOpen?: (val: boolean) => void;
 }
 
-const headerIcons = [
-  "/assets/places-icons/refresh.png",
-  "/assets/icons/sunlight.png",
-  "/assets/icons/plus.png",
-  "/assets/places-icons/arrow-left.png",
-  "/assets/places-icons/arrow-right.png",
-  "/assets/places-icons/trash.png",
-];
-
 const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsData, activeTab = "Objects", 
-  onTabChange, onSelectionChange, page, totalPages, handleNext, handlePrevious, onMoreClick }: SidebarProps) => {
+  onTabChange, onSelectionChange, page, totalPages, handleNext, handlePrevious, onMoreClick, setHistoryData, setHistoryOpen }: SidebarProps) => {
   const [selectedTab, setSelectedTab] = useState(activeTab);
   const tabs = ["Objects", "Events", "Places", "History"];
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
@@ -50,12 +45,12 @@ const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsDa
   const [searchTerm, setSearchTerm] = useState("");
 
   const mergedEventsData = eventsData?.map((event: any) => {
-    const device = geoFenceData?.find((d: any) => Number(d?.id) === Number(event?.deviceid));
+    const device = ensureArray(geoFenceData)?.find((d: any) => Number(d?.id) === Number(event?.deviceid));
     return { ...event, ...(device ?? {})};
   }) || [];
 
-  const allSelected = mergedEventsData?.length > 0 && selectedKeys.length === mergedEventsData.length;
-  const isIndeterminate = selectedKeys.length > 0 && selectedKeys.length < mergedEventsData.length;
+  const allSelected = mergedEventsData?.length > 0 && selectedKeys?.length === mergedEventsData?.length;
+  const isIndeterminate = selectedKeys?.length > 0 && selectedKeys?.length < mergedEventsData?.length;
 
   const handleSelectAll = () => {
     if (allSelected) {
@@ -81,16 +76,16 @@ const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsDa
     }
   }, [selectedTab]);
 
-  const mergedData = geoFenceData?.map((device: any) => {
-    const track = trackLocations?.find((t: any) => t?.deviceId === device?.id);
+  const mergedData = ensureArray(geoFenceData)?.map((device: any) => {
+    const track = ensureArray(trackLocations)?.find((t: any) => t?.deviceId === device?.id);
     return { ...device, ...track };
   });
 
-  const ignitionOff = mergedData?.filter((item: any) => item?.attribute?.ignition === false);
-  const idleDevices = mergedData?.filter((item: any) => item?.attribute?.ignition === true && Number(item?.speed) === 0);
-  const moveDevices = mergedData?.filter((item: any) => item?.attribute?.ignition === true && Number(item?.speed) > 0);
-  const offlineDevices = mergedData?.filter((item: any) => item?.status === "offline");
-  const disabledDevices = mergedData?.filter((item: any) => item?.disabled === "True");
+  const ignitionOff = ensureArray(mergedData)?.filter((item: any) => item?.attribute?.ignition === false);
+  const idleDevices = ensureArray(mergedData)?.filter((item: any) => item?.attribute?.ignition === true && Number(item?.speed) === 0);
+  const moveDevices = ensureArray(mergedData)?.filter((item: any) => item?.attribute?.ignition === true && Number(item?.speed) > 0);
+  const offlineDevices = ensureArray(mergedData)?.filter((item: any) => item?.status === "offline");
+  const disabledDevices = ensureArray(mergedData)?.filter((item: any) => item?.disabled === "True");
 
   const StatusTabs = [
     { label: "Move", count: moveDevices?.length, color: "bg-green-500" },
@@ -105,7 +100,7 @@ const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsDa
     <div className="w-80 bg-card border-r border-border flex flex-col h-full">
       <div className="flex min-h-10 text-white rounded-none font-semibold text-center overflow-hidden">
         {ensureArray(StatusTabs)?.map((tab, index) => (
-          <button key={index} onClick={() => handleTabClick(tab?.label)} className={cn("flex-1 px-1 rounded-none transition-colors", tab?.color)}>
+          <button key={index} type="button" className={cn("flex-1 px-1 rounded-none transition-colors", tab?.color)}>
             <div className="text-xs">{tab?.count ?? 0}</div>
             <div className="text-[10px]">{tab?.label ?? ""}</div>
           </button>
@@ -131,23 +126,14 @@ const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsDa
       {selectedTab === "Objects" && (
         <div className="flex-1 flex flex-col">
           <div className="py-2 flex items-center gap-2 border-b border-border">
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 bg-[#04003A] text-white placeholder:text-gray-300 rounded-none focus-visible:ring-1 focus-visible:ring-blue-500"
-                />
-              </div>
+            <div className="relative flex-1">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input placeholder="Search" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8 bg-[#04003A] placeholder:text-gray-300 rounded-none h-8 text-sm text-white focus-visible:ring-1 focus-visible:ring-blue-500"
+              />
             </div>
             <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                className="bg-[#04003A] rounded-none"
-                size="sm"
-              >
+              <Button variant="outline" className="bg-[#04003A] rounded-none hover:bg-blue-950 px-1 py-0 h-7 w-7" size="sm">
                 <div className="max-w-28">
                   <img
                     src="/assets/icons/refresh.png"
@@ -156,11 +142,7 @@ const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsDa
                   />
                 </div>
               </Button>
-              <Button
-                variant="outline"
-                className="bg-[#04003A] rounded-none"
-                size="sm"
-              >
+              <Button variant="outline" className="bg-[#04003A] rounded-none hover:bg-blue-950 px-1 py-0 h-7 w-7" size="sm">
                 <div className="max-w-28">
                   <img
                     src="/assets/icons/sunlight.png"
@@ -169,11 +151,7 @@ const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsDa
                   />
                 </div>
               </Button>
-              <Button
-                variant="outline"
-                className="bg-[#04003A] rounded-none"
-                size="sm"
-              >
+              <Button variant="outline" className="bg-[#04003A] rounded-none hover:bg-blue-950 px-1 py-0 h-7 w-7" size="sm">
                 <div className="max-w-28">
                   <img
                     src="/assets/icons/plus.png"
@@ -198,21 +176,15 @@ const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsDa
       {selectedTab === "Events" && (
         <div className="flex-1 flex flex-col">
           <div className="py-2 flex items-center gap-2 border-b border-border">
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search"
-                  className="pl-9 bg-[#04003A] placeholder:text-gray-300 rounded-none"
-                />
-              </div>
+            <div className="relative flex-1">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                placeholder="Search"
+                className="pl-8 bg-[#04003A] placeholder:text-gray-300 rounded-none h-8 text-sm"
+              />
             </div>
             <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                className="bg-[#04003A] rounded-none hover:bg-blue-950"
-                size="sm"
-              >
+              <Button variant="outline" className="bg-[#04003A] rounded-none hover:bg-blue-950 px-1 py-0 h-7 w-7" size="sm">
                 <div className="max-w-28">
                   <img
                     src="/assets/icons/refresh.png"
@@ -221,11 +193,7 @@ const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsDa
                   />
                 </div>
               </Button>
-              <Button
-                variant="outline"
-                className="bg-[#04003A] rounded-none hover:bg-blue-950"
-                size="sm"
-              >
+              <Button variant="outline" className="bg-[#04003A] rounded-none hover:bg-blue-950 px-1 py-0 h-7 w-7" size="sm">
                 <div className="max-w-28">
                   <img
                     src="/assets/icons/sunlight.png"
@@ -234,11 +202,7 @@ const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsDa
                   />
                 </div>
               </Button>
-              <Button
-                variant="outline"
-                className="bg-[#04003A] rounded-none hover:bg-blue-950"
-                size="sm"
-              >
+              <Button variant="outline" className="bg-[#04003A] rounded-none hover:bg-blue-950 px-1 py-0 h-7 w-7" size="sm">
                 <div className="max-w-28">
                   <img
                     src="/assets/icons/plus.png"
@@ -345,9 +309,31 @@ const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsDa
         </div>
       )}
 
-      {selectedTab !== "Objects" && selectedTab !== "Events" && selectedTab !== "Places" && (
-        <div className="flex-1 flex items-center justify-center text-muted-foreground">
-          {selectedTab} content coming soon...
+      {selectedTab === "History" && (
+        <div className="flex-1 flex flex-col">
+          <div className="py-2 flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                placeholder="Search"
+                className="pl-8 bg-[#04003A] placeholder:text-gray-300 rounded-none h-8 text-sm"
+              />
+            </div>
+            <div className="flex items-center gap-1">
+              {historyIcons?.map((src, idx) => {
+                return (
+                  <Button key={idx} variant="outline" className="bg-[#04003A] rounded-none hover:bg-blue-950 px-1 py-0 h-7 w-7" size="sm">
+                    <img src={src} alt="icon" className="w-4 h-4 object-contain" />
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+          <HistoryTable 
+            mergedData={mergedData}
+            setHistoryData={setHistoryData}
+            setHistoryOpen={setHistoryOpen}
+          />
         </div>
       )}
     </div>
