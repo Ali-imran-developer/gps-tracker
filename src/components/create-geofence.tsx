@@ -133,24 +133,26 @@ const CreateGeofence = ({ trigger, open, setOpen, editingZone }: AddPlaceDialogP
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-[600px]">
+      <DialogContent className="max-w-[95vw] sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{editingZone ? "Edit Geofence" : "Add New Geofence"}</DialogTitle>
+          <DialogTitle className="text-base sm:text-lg">{editingZone ? "Edit Geofence" : "Add New Geofence"}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={formik.handleSubmit} className="space-y-4">
-          <div className="flex items-center gap-2">
+        <form onSubmit={formik.handleSubmit} className="space-y-3 sm:space-y-4">
+          <div className="flex flex-col sm:flex-row items-center gap-2">
             <Input
               name="name"
               placeholder="Enter name"
               value={formik.values.name}
               onChange={formik.handleChange}
+              className="text-sm"
             />
             <Input
               name="description"
               placeholder="Enter description"
               value={formik.values.description}
               onChange={formik.handleChange}
+              className="text-sm"
             />
           </div>
 
@@ -162,7 +164,7 @@ const CreateGeofence = ({ trigger, open, setOpen, editingZone }: AddPlaceDialogP
             }}
             value={formik.values.type}
           >
-            <SelectTrigger>
+            <SelectTrigger className="text-sm">
               <SelectValue placeholder="Select type" />
             </SelectTrigger>
             <SelectContent>
@@ -171,7 +173,7 @@ const CreateGeofence = ({ trigger, open, setOpen, editingZone }: AddPlaceDialogP
             </SelectContent>
           </Select>
 
-          <div className="w-full h-[300px]">
+          <div className="w-full h-[200px] sm:h-[250px] md:h-[300px]">
             <GoogleMap
               mapTypeId="roadmap"
               mapContainerStyle={{ width: "100%", height: "100%" }}
@@ -277,7 +279,7 @@ const CreateGeofence = ({ trigger, open, setOpen, editingZone }: AddPlaceDialogP
             <Button
               type="button"
               variant="outline"
-              className="w-full"
+              className="w-full text-sm"
               onClick={() => {
                 setPolygonCoords([]);
                 setCircle(null);
@@ -285,9 +287,9 @@ const CreateGeofence = ({ trigger, open, setOpen, editingZone }: AddPlaceDialogP
             >
               Reset
             </Button>
-            <Button type="submit" className="w-full bg-[#04003A]">
+            <Button type="submit" className="w-full bg-[#04003A] text-sm">
               {isLoadingZones ? (
-                <Loader2 className="w-7 h-7 animate-spin" />
+                <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 animate-spin" />
               ) : (
                 "Save"
               )}

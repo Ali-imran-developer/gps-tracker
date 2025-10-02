@@ -29,10 +29,12 @@ interface SidebarProps {
   onMoreClick: (val: any) => void;
   setHistoryData: any;
   setHistoryOpen?: (val: boolean) => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
 const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsData, activeTab = "Objects", 
-  onTabChange, onSelectionChange, page, totalPages, handleNext, handlePrevious, onMoreClick, setHistoryData, setHistoryOpen }: SidebarProps) => {
+  onTabChange, onSelectionChange, page, totalPages, handleNext, handlePrevious, onMoreClick, setHistoryData, setHistoryOpen, isOpen = false, onClose }: SidebarProps) => {
   const [selectedTab, setSelectedTab] = useState(activeTab);
   const tabs = ["Objects", "Events", "Places", "History"];
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
@@ -97,15 +99,31 @@ const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsDa
   ];
 
   return (
-    <div className="w-80 bg-card border-r border-border flex flex-col h-full">
-      <div className="flex min-h-10 text-white rounded-none font-semibold text-center overflow-hidden">
-        {ensureArray(StatusTabs)?.map((tab, index) => (
-          <button key={index} type="button" className={cn("flex-1 px-1 rounded-none transition-colors", tab?.color)}>
-            <div className="text-xs">{tab?.count ?? 0}</div>
-            <div className="text-[10px]">{tab?.label ?? ""}</div>
-          </button>
-        ))}
-      </div>
+    <>
+      {/* Backdrop for mobile */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <div
+        className={cn(
+          "fixed lg:relative top-0 left-0 h-full bg-card border-r border-border flex flex-col z-50 transition-transform duration-300 ease-in-out",
+          "w-80 sm:w-80 md:w-80",
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        )}
+      >
+        <div className="flex min-h-8 sm:min-h-10 text-white rounded-none font-semibold text-center overflow-hidden">
+          {ensureArray(StatusTabs)?.map((tab, index) => (
+            <button key={index} type="button" className={cn("flex-1 px-0.5 sm:px-1 rounded-none transition-colors", tab?.color)}>
+              <div className="text-[10px] sm:text-xs">{tab?.count ?? 0}</div>
+              <div className="text-[8px] sm:text-[10px]">{tab?.label ?? ""}</div>
+            </button>
+          ))}
+        </div>
       <div className="flex border-b border-border bg-[#D9D9D9]">
         {tabs?.map((tab) => (
           <button
@@ -336,7 +354,8 @@ const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsDa
           />
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 

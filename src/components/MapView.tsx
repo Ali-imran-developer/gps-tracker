@@ -242,28 +242,28 @@ const MapView = ({
   return (
     <div className="flex-1 relative bg-accent min-h-screen overflow-hidden">
       {selectedItems?.length === 1 && address && showAddress && (
-        <div className="absolute bottom-[56px] left-1/2 -translate-x-1/2 z-50">
-          <div className="flex items-center justify-between bg-[#04003A] text-white px-4 py-2 rounded-md">
+        <div className="absolute bottom-14 sm:bottom-[56px] left-1/2 -translate-x-1/2 z-50 w-[90%] sm:w-auto max-w-md">
+          <div className="flex items-center justify-between bg-[#04003A] text-white px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-md">
             {showAddress ? (
-              <p className="text-sm truncate">{formatDate(address)}</p>
+              <p className="text-xs sm:text-sm truncate">{formatDate(address)}</p>
             ) : (
-              <p className="text-sm italic text-gray-400">Address hidden</p>
+              <p className="text-xs sm:text-sm italic text-gray-400">Address hidden</p>
             )}
             <button
               onClick={() => setShowAddress((prev) => !prev)}
-              className="ml-3"
+              className="ml-2 sm:ml-3"
             >
               {showAddress ? (
-                <EyeOff className="w-5 h-5" />
+                <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
               ) : (
-                <Eye className="w-5 h-5" />
+                <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
               )}
             </button>
           </div>
         </div>
       )}
 
-      <div className="absolute top-4 left-4 z-10 flex gap-2">
+      <div className="absolute top-2 sm:top-4 left-2 sm:left-4 z-10 flex flex-wrap gap-1 sm:gap-2">
         {topControls?.map((control) => {
           const IconComponent = control.icon;
           return (
@@ -272,34 +272,34 @@ const MapView = ({
               variant="secondary"
               size="sm"
               className={cn(
-                "gap-2 bg-map-control hover:bg-map-control-hover",
+                "gap-1 sm:gap-2 bg-map-control hover:bg-map-control-hover text-xs sm:text-sm px-2 sm:px-3 h-7 sm:h-8",
                 activeControl === control.id &&
                   "bg-map-control-active text-white"
               )}
               onClick={() => handleControlClick(control.id)}
             >
-              <IconComponent className="h-4 w-4" />
-              {control.label}
+              <IconComponent className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{control.label}</span>
             </Button>
           );
         })}
       </div>
 
-      <div className="absolute top-4 right-4 z-10 flex flex-col gap-1">
+      <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10 flex flex-col gap-0.5 sm:gap-1">
         {mapTools?.map((tool) => (
           <Button
             key={tool.id}
             variant="secondary"
             size="sm"
             className={cn(
-              "w-8 h-8 p-0 bg-map-control hover:bg-map-control-hover bg-[#04003A]",
+              "w-7 h-7 sm:w-8 sm:h-8 p-0 bg-map-control hover:bg-map-control-hover bg-[#04003A]",
               activeControl === tool.id && "bg-map-control-active text-white"
             )}
             onClick={() =>
               setActiveControl(activeControl === tool.id ? null : tool.id)
             }
           >
-            <div className="w-4 h-4 mx-auto">
+            <div className="w-3 h-3 sm:w-4 sm:h-4 mx-auto">
               <img
                 src={tool.icon}
                 alt={tool.id}
@@ -311,28 +311,28 @@ const MapView = ({
       </div>
 
       {historyOpen && historyData && historyData?.length > 0 && (
-        <div className="absolute bottom-4 right-0 left-0 bg-white z-50 flex flex-col gap-1 min-h-[250px] max-h-[300px] overflow-y-auto">
-          <div className="sticky top-0 z-10 bg-[#04003A] text-white text-xs font-bold grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-2 p-2 border-b">
+        <div className="absolute bottom-2 sm:bottom-4 right-0 left-0 bg-white z-50 flex flex-col gap-1 min-h-[200px] sm:min-h-[250px] max-h-[250px] sm:max-h-[300px] overflow-y-auto mx-2 sm:mx-0">
+          <div className="sticky top-0 z-10 bg-[#04003A] text-white text-[10px] sm:text-xs font-bold grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-1 sm:gap-2 p-1 sm:p-2 border-b">
             <span>DateTime</span>
             <span>Ignition</span>
-            <span>Latitude</span>
-            <span>Longitude</span>
-            <span>Speed</span>
-            <span>Address</span>
-            <span>Total Distance</span>
-            <button className="absolute top-1 right-1 z-10" onClick={() => setHistoryOpen(false)}><X className="text-white" /></button>
+            <span className="hidden sm:inline">Latitude</span>
+            <span className="hidden sm:inline">Longitude</span>
+            <span className="hidden md:inline">Speed</span>
+            <span className="hidden md:inline">Address</span>
+            <span className="hidden md:inline">Total Distance</span>
+            <button className="absolute top-0.5 sm:top-1 right-0.5 sm:right-1 z-10" onClick={() => setHistoryOpen(false)}><X className="text-white w-4 h-4 sm:w-5 sm:h-5" /></button>
           </div>
 
           {ensureArray(historyData)?.map((row: any, idx: number) => (
-            <div key={idx} className="hover:bg-gray-50 border-b border-gray-200 p-2 text-xs">
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-2">
-                <span>{row?.serverTime ?? ""}</span>
+            <div key={idx} className="hover:bg-gray-50 border-b border-gray-200 p-1 sm:p-2 text-[10px] sm:text-xs">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-1 sm:gap-2">
+                <span className="truncate">{row?.serverTime ?? ""}</span>
                 <span>{row?.ignition ?? ""}</span>
-                <span>{row?.latitude ?? ""}</span>
-                <span>{row?.longitude ?? ""}</span>
-                <span>{row?.speed ?? ""} km/h</span>
-                <span>{row?.address ?? ""}</span>
-                <span>{row?.totalDistance ?? ""}</span>
+                <span className="hidden sm:inline truncate">{row?.latitude ?? ""}</span>
+                <span className="hidden sm:inline truncate">{row?.longitude ?? ""}</span>
+                <span className="hidden md:inline">{row?.speed ?? ""} km/h</span>
+                <span className="hidden md:inline truncate">{row?.address ?? ""}</span>
+                <span className="hidden md:inline">{row?.totalDistance ?? ""}</span>
               </div>
             </div>
           ))}
