@@ -42,29 +42,29 @@ const AppliedZone = ({
 }: AppliedZoneProps) => {
   return (
     <div>
-      <div className="px-0 py-2 border-b border-gray-200 bg-[#D9D9D9] grid grid-cols-10 items-center text-center">
+      <div className="px-0 py-1.5 sm:py-2 border-b border-gray-200 bg-[#D9D9D9] grid grid-cols-10 items-center text-center">
         <button className="col-span-1 border-r border-gray-400 flex items-center justify-center h-full hover:bg-gray-200">
           <img
             src="/assets/icons/eye.png"
             alt="eye Icon"
-            className="w-5 h-5 object-contain"
+            className="w-4 h-4 sm:w-5 sm:h-5 object-contain"
           />
         </button>
         <div className="col-span-9 flex items-center justify-between px-2 h-full">
-          <span className="text-sm font-medium text-gray-800 ps-8">
+          <span className="text-xs sm:text-sm font-medium text-gray-800 ps-4 sm:ps-8">
             Objects
           </span>
         </div>
       </div>
       {isLoading ? (
-        <div className="flex justify-center items-center p-4">
-          <Loader2 className="w-5 h-5 text-gray-500 animate-spin" />
+        <div className="flex justify-center items-center p-3 sm:p-4">
+          <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 animate-spin" />
         </div>
       ) : selectedZones?.length > 0 ? (
-        <div className="w-full max-w-md mx-auto border rounded-none shadow-sm bg-white font-sans text-xs">
-          <div className="grid grid-cols-2 w-full border-b bg-gray-100 text-gray-700 font-semibold text-xs">
-            <div className="ps-12 py-2 border-r">Name</div>
-            <div className="px-3 py-2">Description</div>
+        <div className="w-full max-w-md mx-auto border rounded-none shadow-sm bg-white font-sans text-[10px] sm:text-xs">
+          <div className="grid grid-cols-2 w-full border-b bg-gray-100 text-gray-700 font-semibold">
+            <div className="ps-8 sm:ps-12 py-1.5 sm:py-2 border-r">Name</div>
+            <div className="px-2 sm:px-3 py-1.5 sm:py-2">Description</div>
           </div>
           {selectedZones?.map((item: any, index: number) => {
             return (

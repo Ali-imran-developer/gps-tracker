@@ -1,4 +1,4 @@
-import { ChevronDown, MoreVertical } from "lucide-react";
+import { ChevronDown, Menu, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,21 +16,34 @@ import {
 } from "@/components/ui/sheet";
 import { logout } from "@/utils/auth";
 
-const Header = () => {
+interface HeaderProps {
+  onToggleSidebar?: () => void;
+}
+
+const Header = ({ onToggleSidebar }: HeaderProps) => {
   return (
     <header className="bg-card border-b border-border flex items-center justify-between">
       {/* Left side */}
-      <div className="flex items-center justify-between gap-4 bg-[#04003A] h-14 px-3 flex-1">
-        <div className="text-lg md:text-xl font-bold text-white">
+      <div className="flex items-center justify-between gap-2 sm:gap-4 bg-[#04003A] h-12 sm:h-14 px-2 sm:px-3 flex-1">
+        {/* Hamburger menu for mobile */}
+        <button
+          onClick={onToggleSidebar}
+          className="lg:hidden p-1 text-white hover:bg-blue-950 rounded"
+        >
+          <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
+        </button>
+        
+        <div className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-white">
           GPS Tracker
         </div>
 
         {/* Language dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild className="bg-white rounded-none">
-            <Button variant="ghost" size="sm" className="gap-2">
-              English
-              <ChevronDown className="h-4 w-4" />
+            <Button variant="ghost" size="sm" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
+              <span className="hidden sm:inline">English</span>
+              <span className="sm:hidden">EN</span>
+              <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
@@ -41,42 +54,42 @@ const Header = () => {
         </DropdownMenu>
       </div>
 
-      <div className="hidden lg:flex items-center gap-2 sm:gap-4 bg-[#F5F5F5] h-14 px-2 sm:px-4 flex-shrink-0">
+      <div className="hidden lg:flex items-center gap-2 sm:gap-4 bg-[#F5F5F5] h-12 sm:h-14 px-2 sm:px-4 flex-shrink-0">
         {/* Settings */}
-        <Button variant="ghost" size="sm">
+        <Button variant="ghost" size="sm" className="h-8 w-8 p-1">
           <img
             src="/assets/icons/setting.png"
             alt="Setting Icon"
-            className="w-6 h-6 object-contain"
+            className="w-5 h-5 sm:w-6 sm:h-6 object-contain"
           />
         </Button>
 
-        <Button variant="ghost" size="sm">
-          <div className="max-w-28">
-            <img src="/assets/icons/cart.png" alt="Setting Icon" className="w-full h-full object-contain" />
+        <Button variant="ghost" size="sm" className="h-8 px-2">
+          <div className="w-5 h-5 sm:w-6 sm:h-6">
+            <img src="/assets/icons/cart.png" alt="Cart Icon" className="w-full h-full object-contain" />
           </div>
-          <Badge className="rounded-md text-gray-600" variant="outline">190</Badge>
+          <Badge className="rounded-md text-gray-600 text-xs" variant="outline">190</Badge>
         </Button>
 
-        <Button variant="ghost" size="sm" className="gap-2 text-[#444444]">
-          <div className="max-w-28">
-            <img src="/assets/icons/user.png" alt="Setting Icon" className="w-full h-full object-contain" />
+        <Button variant="ghost" size="sm" className="gap-1 sm:gap-2 text-[#444444] h-8 px-2 text-xs sm:text-sm">
+          <div className="w-5 h-5 sm:w-6 sm:h-6">
+            <img src="/assets/icons/user.png" alt="User Icon" className="w-full h-full object-contain" />
           </div>
-          Admin
-          <div className="max-w-28 ms-3">
-            <img src="/assets/icons/tv.png" alt="Setting Icon" className="w-full h-full object-contain" />
+          <span className="hidden xl:inline">Admin</span>
+          <div className="w-5 h-5 sm:w-6 sm:h-6 ms-1 sm:ms-3">
+            <img src="/assets/icons/tv.png" alt="TV Icon" className="w-full h-full object-contain" />
           </div>
         </Button>
 
-        <Button variant="ghost" size="sm" onClick={() => logout()}>
+        <Button variant="ghost" size="sm" onClick={() => logout()} className="h-8 w-8 p-1">
           <img
             src="/assets/icons/logout.png"
             alt="Logout Icon"
-            className="w-6 h-6 object-contain"
+            className="w-5 h-5 sm:w-6 sm:h-6 object-contain"
           />
         </Button>
       </div>
-      <div className="flex lg:hidden items-center bg-[#F5F5F5] h-14 px-2">
+      <div className="flex lg:hidden items-center bg-[#F5F5F5] h-12 sm:h-14 px-1 sm:px-2">
         <Sheet>
           <SheetTrigger asChild className="w-20 max-w-full">
             <Button variant="ghost" size="sm">

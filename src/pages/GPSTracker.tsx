@@ -18,6 +18,7 @@ import moment from "moment-timezone";
 const GPSTracker = () => {
   const [currentPage, setCurrentPage] = useState<"main" | "dashboard">("main");
   const [activeTab, setActiveTab] = useState("Objects");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { cities, isLoading, handleCheckalldevices, handleGetTrackLocations, handleGetEventsData } = useGeoFence();
   const { geoFenceData, trackLocations, eventsData } = useSelector((state: any) => state.GeoFence);
   const session = AuthController.getSession();
@@ -251,8 +252,8 @@ const GPSTracker = () => {
 
   return (
     <div className="h-screen flex flex-col bg-background">
-      <Header />
-      <div className="flex-1 flex overflow-hidden">
+      <Header onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+      <div className="flex-1 flex overflow-hidden relative">
         <Sidebar
           selectedItems={selectedItems}
           loader={isLoading}
@@ -270,6 +271,8 @@ const GPSTracker = () => {
           setHistoryData={setHistoryData}
           setHistoryOpen={setHistoryOpen}
           handleDownloadPDF={handleDownloadPDF}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
         />
         <MapView
           cities={cities}

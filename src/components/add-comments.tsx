@@ -61,13 +61,13 @@ const AddComments = ({ viewDialogOpen, setViewDialogOpen, moreItem }) => {
   return (
     <div>
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Add Comments</DialogTitle>
+            <DialogTitle className="text-base sm:text-lg">Add Comments</DialogTitle>
           </DialogHeader>
-          <form onSubmit={formik.handleSubmit} className="space-y-4 mt-5">
+          <form onSubmit={formik.handleSubmit} className="space-y-3 sm:space-y-4 mt-3 sm:mt-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700">
                 Comments
               </label>
               <Input
@@ -76,12 +76,12 @@ const AddComments = ({ viewDialogOpen, setViewDialogOpen, moreItem }) => {
                 disabled={formik.values.selectedOption !== ""}
                 onChange={formik.handleChange}
                 placeholder="Enter your comment..."
-                className="mt-1"
+                className="mt-1 text-sm"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700">
                 Choose option
               </label>
               <Select
@@ -92,7 +92,7 @@ const AddComments = ({ viewDialogOpen, setViewDialogOpen, moreItem }) => {
                 value={formik?.values?.selectedOption}
                 disabled={formik?.values?.comments?.trim() !== ""}
               >
-                <SelectTrigger className="mt-1 w-full">
+                <SelectTrigger className="mt-1 w-full text-sm">
                   <SelectValue placeholder="Choose your option" />
                 </SelectTrigger>
                 <SelectContent>
@@ -110,8 +110,8 @@ const AddComments = ({ viewDialogOpen, setViewDialogOpen, moreItem }) => {
               </Select>
             </div>
 
-            <Button type="submit" disabled={isButtonDisabled} className="w-full text-white bg-[#04003A] px-4 py-2 rounded-none">
-              {isAdding ? <Loader2 className="w-6 h-6 animate-spin" /> : "Add"}
+            <Button type="submit" disabled={isButtonDisabled} className="w-full text-white bg-[#04003A] px-3 sm:px-4 py-2 rounded-none text-sm">
+              {isAdding ? <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" /> : "Add"}
             </Button>
           </form>
         </DialogContent>
