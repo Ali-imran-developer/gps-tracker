@@ -1,11 +1,11 @@
 import AuthController from "@/controllers/authController";
 import { ensureArray } from "@/helper-functions/use-formater";
 import { useHistory } from "@/hooks/history-hook";
-import { useSelector } from "react-redux";
 import { Formik, Form, Field } from "formik";
-import * as Yup from "yup";
 import moment from "moment-timezone";
 import { Loader2 } from "lucide-react";
+import { getDateRange } from "@/helper-functions/use-date-range";
+import historySchema from "@/validators/history-schema";
 
 interface HistoryTableProps {
   mergedData: any;
@@ -18,34 +18,6 @@ const HistoryTable = ({ mergedData, setHistoryData, setHistoryOpen, handleDownlo
   const session = AuthController.getSession();
   const { isLoading, handleGetAllHistory } = useHistory();
 
-  const FilterSchema = Yup.object().shape({
-    deviceId: Yup.string().required("Object is required"),
-    filter: Yup.string().required("Filter is required"),
-    timeFrom: Yup.string().when("filter", {
-      is: "Custom",
-      then: (schema) => schema.required("From date is required"),
-      otherwise: (schema) => schema.notRequired(),
-    }),
-    timeTo: Yup.string().when("filter", {
-      is: "Custom",
-      then: (schema) => schema.required("To date is required"),
-      otherwise: (schema) => schema.notRequired(),
-    }),
-  });
-
-  const getDateRange = (filter: string) => {
-    const now = moment().tz("Asia/Karachi");
-    let from: any, to: any;
-    if (filter === "Today") {
-      from = now.clone().startOf("day").subtract(5, "hours").toISOString();
-      to = now.clone().subtract(5, "hours").toISOString();
-    } else if (filter === "Yesterday") {
-      from = now.clone().subtract(1, "day").startOf("day").subtract(5, "hours").toISOString();
-      to = now.clone().subtract(1, "day").endOf("day").subtract(5, "hours").toISOString();
-    }
-    return { from, to };
-  };
-
   return (
     <div className="space-y-2">
       <Formik
@@ -55,18 +27,18 @@ const HistoryTable = ({ mergedData, setHistoryData, setHistoryOpen, handleDownlo
           timeFrom: "",
           timeTo: "",
         }}
-        validationSchema={FilterSchema}
+        validationSchema={historySchema}
         enableReinitialize={true}
         onSubmit={async (values, { resetForm }) => {
           let from = values.timeFrom;
           let to = values.timeTo;
-          if (values.filter === "Today" || values.filter === "Yesterday") {
+          if (values.filter !== "Custom") {
             const range = getDateRange(values.filter);
             from = range.from!;
             to = range.to!;
           } else if (values.filter === "Custom") {
-            from = moment(values.timeFrom).subtract(5, "hours").toISOString();
-            to = moment(values.timeTo).subtract(5, "hours").toISOString();
+            from = moment(values.timeFrom).utc().toISOString();
+            to = moment(values.timeTo).utc().toISOString();
           }
           const queryParams = {
             deviceId: Number(values.deviceId),
@@ -84,7 +56,7 @@ const HistoryTable = ({ mergedData, setHistoryData, setHistoryOpen, handleDownlo
           }
         }}
       >
-        {({ values, errors, touched, setFieldValue }) => (
+        {({ values }) => (
           <Form className="bg-gray-100 px-2 rounded-lg space-y-2">
             <div className="flex items-center justify-between">
               <span className="font-semibold text-gray-700 text-sm">
@@ -159,13 +131,13 @@ const HistoryTable = ({ mergedData, setHistoryData, setHistoryOpen, handleDownlo
                   let from = values.timeFrom;
                   let to = values.timeTo;
 
-                  if (values.filter === "Today" || values.filter === "Yesterday") {
+                  if (values.filter !== "Custom") {
                     const range = getDateRange(values.filter);
                     from = range.from!;
                     to = range.to!;
                   } else if (values.filter === "Custom") {
-                    from = moment(values.timeFrom).subtract(5, "hours").toISOString();
-                    to = moment(values.timeTo).subtract(5, "hours").toISOString();
+                    from = moment(values.timeFrom).utc().toISOString();
+                    to = moment(values.timeTo).utc().toISOString();
                   }
                   console.log("PDF Export Times:", from, to);
                   handleDownloadPDF(from, to);
