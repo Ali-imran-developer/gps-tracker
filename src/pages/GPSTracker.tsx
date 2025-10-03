@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 import MapView from "@/components/MapView";
@@ -10,6 +10,10 @@ import { useAuthWebSocket } from "@/hooks/useWebSocket";
 // import { webSocketUrl } from "@/config/constants";
 import { ensureArray } from "@/helper-functions/use-formater";
 import { setGeoFenceData, setTrackLocations } from "@/store/slices/geofenceSlice";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+import toast from "react-hot-toast";
+import moment from "moment-timezone";
 
 const GPSTracker = () => {
   const [currentPage, setCurrentPage] = useState<"main" | "dashboard">("main");
@@ -24,10 +28,9 @@ const GPSTracker = () => {
   const [localEvents, setLocalEvents] = useState<any[]>([]);
   const [historyData, setHistoryData] = useState([]);
   const [historyOpen, setHistoryOpen] = useState(false);
-  // const { messages } = useWebSocket(webSocketUrl);
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const { messages } = useAuthWebSocket();
   const dispatch = useDispatch();
-  console.log("messages", messages);
 
   useEffect(() => {
     if (!messages?.length) return;
@@ -36,7 +39,9 @@ const GPSTracker = () => {
       if (latestMessage?.devices && Array.isArray(latestMessage?.devices)) {
         const updatedDevices = latestMessage.devices;
         const mergedDevices = ensureArray(geoFenceData)?.map((device: any) => {
-          const update = ensureArray(updatedDevices)?.find((d: any) => d?.name === device?.name);
+          const update = ensureArray(updatedDevices)?.find(
+            (d: any) => d?.name === device?.name
+          );
           return update ? { ...device, ...update } : device;
         });
         if (JSON.stringify(mergedDevices) !== JSON.stringify(geoFenceData)) {
@@ -47,10 +52,14 @@ const GPSTracker = () => {
       if (latestMessage?.positions && Array.isArray(latestMessage.positions)) {
         const updatedPositions = latestMessage.positions;
         const mergedPositions = ensureArray(trackLocations)?.map((pos: any) => {
-          const update = updatedPositions.find((p: any) => p?.deviceId === pos?.deviceId);
+          const update = updatedPositions.find(
+            (p: any) => p?.deviceId === pos?.deviceId
+          );
           return update ? { ...pos, ...update } : pos;
         });
-        if (JSON.stringify(mergedPositions) !== JSON.stringify(trackLocations)) {
+        if (
+          JSON.stringify(mergedPositions) !== JSON.stringify(trackLocations)
+        ) {
           dispatch(setTrackLocations(mergedPositions));
         }
       }
@@ -63,7 +72,9 @@ const GPSTracker = () => {
     setLocalEvents((prev) => {
       const exists = ensureArray(prev)?.find((e) => e.ID === id);
       if (exists) {
-        return ensureArray(prev)?.map((e) => (e.ID === id ? { ...e, process } : e));
+        return ensureArray(prev)?.map((e) =>
+          e.ID === id ? { ...e, process } : e
+        );
       }
       const event = ensureArray(eventsData)?.find((e: any) => e.ID === id);
       if (event) {
@@ -91,7 +102,6 @@ const GPSTracker = () => {
     handleCheckalldevices(queryParams);
     handleGetEventsData({ page, userid: session?.user?.id });
     handleGetTrackLocations(queryParams);
-
   }, [page]);
 
   const handlePrevious = () => {
@@ -114,11 +124,130 @@ const GPSTracker = () => {
     return <Dashboard onNavigate={handleNavigation} />;
   }
 
-  // useEffect(() => {
-  //   if(selectedItems?.[0]?.geofenceid){
-  //     handleGeofenceCities(selectedItems?.[0]?.geofenceid);
-  //   }
-  // }, [selectedItems]);
+  const handleDownloadPDF = async (fromTime: string, toTime: string) => {
+    if (!historyData?.length || !mapContainerRef.current) {
+      toast.error("No history data to export");
+      return;
+    }
+    try {
+      const canvas = await html2canvas(mapContainerRef.current, {
+        useCORS: true,
+        logging: false,
+        scale: 2,
+        width: mapContainerRef.current.offsetWidth,
+        height: mapContainerRef.current.offsetHeight,
+      });
+      const pdf = new jsPDF("portrait", "mm", "a4");
+      const imgData = canvas.toDataURL("image/png");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      let currentY = 15;
+      pdf.setFontSize(16);
+      pdf.setFont("helvetica", "bold");
+      const mainHeading = "GPS Tracker Website";
+      const headingWidth = pdf.getTextWidth(mainHeading);
+      pdf.text(mainHeading, (pageWidth - headingWidth) / 2, currentY);
+      currentY += 8;
+      pdf.setFontSize(10);
+      const formattedFrom = fromTime ? moment(fromTime).tz("Asia/Karachi").format("YYYY-MM-DD") : "";
+      const formattedTo = toTime ? moment(toTime).tz("Asia/Karachi").format("YYYY-MM-DD") : "";
+      const combinedText = `History Report • ${formattedFrom} - ${formattedTo}`;
+      const combinedWidth = pdf.getTextWidth(combinedText);
+      pdf.text(combinedText, (pageWidth - combinedWidth) / 2, currentY);
+      currentY += 6;
+
+      // const logoUrl = "/assets/banner/dashboard-map-banner.png";
+      // const logoImg = new Image();
+      // logoImg.src = logoUrl;
+      // const logoWidth = 35;
+      // const logoHeight = 18;
+      // pdf.addImage(logoImg, "PNG", (pageWidth - logoWidth) / 2, currentY, logoWidth, logoHeight);
+      // currentY += logoHeight + 5;
+
+      const canvasAspectRatio = canvas.width / canvas.height;
+      const maxMapWidth = pageWidth - 2 * margin;
+      const maxMapHeight = 80;
+      let mapWidth = maxMapWidth;
+      let mapHeight = mapWidth / canvasAspectRatio;
+      if (mapHeight > maxMapHeight) {
+        mapHeight = maxMapHeight;
+        mapWidth = mapHeight * canvasAspectRatio;
+      }
+      const mapX = (pageWidth - mapWidth) / 2;
+      pdf.addImage(imgData, "PNG", mapX, currentY, mapWidth, mapHeight);
+      currentY += mapHeight + 8;
+      const headers = [ "DateTime", "Ign", "Latitude", "Longitude", "Speed", "Address", "Distance" ];
+      const colWidths = [32, 12, 22, 22, 15, 62, 25];
+      pdf.setFontSize(7);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFillColor(240, 240, 240);
+      let x = margin;
+      headers.forEach((h, i) => {
+        pdf.rect(x, currentY, colWidths[i], 7, "D");
+        pdf.text(h, x + 1, currentY + 5);
+        x += colWidths[i];
+      });
+      currentY += 7;
+      pdf.setFont("helvetica", "normal");
+      historyData?.forEach((row: any) => {
+        x = margin;
+        const rowData = [
+          row?.serverTime ?? "",
+          row?.ignition ?? "",
+          row?.latitude ?? "",
+          row?.longitude ?? "",
+          `${row?.speed ?? ""}`,
+          row?.address ?? "",
+          row?.totalDistance ?? "",
+        ];
+        let maxCellHeight = 6;
+        rowData.forEach((text, i) => {
+          let cellText = String(text);
+          let lines = [cellText];
+          if (i === 5 || i === 0) {
+            lines = pdf.splitTextToSize(cellText, colWidths[i] - 2);
+          }
+          const lineHeight = 3.5;
+          const cellHeight = Math.max(6, lines.length * lineHeight + 1);
+          if (cellHeight > maxCellHeight) maxCellHeight = cellHeight;
+        });
+        if (currentY + maxCellHeight > pageHeight - 15) {
+          pdf.addPage();
+          currentY = 15;
+          x = margin;
+          pdf.setFont("helvetica", "bold");
+          pdf.setFillColor(240, 240, 240);
+          headers.forEach((h, i) => {
+            pdf.rect(x, currentY, colWidths[i], 7, "D");
+            pdf.text(h, x + 1, currentY + 5);
+            x += colWidths[i];
+          });
+          currentY += 7;
+          pdf.setFont("helvetica", "normal");
+          x = margin;
+        }
+        rowData.forEach((text, i) => {
+          let cellText = String(text);
+          let lines = [cellText];
+          if (i === 5 || i === 0) {
+            lines = pdf.splitTextToSize(cellText, colWidths[i] - 2);
+          }
+          pdf.rect(x, currentY, colWidths[i], maxCellHeight);
+          lines.forEach((line: string, lineIndex: number) => {
+            pdf.text(line, x + 1, currentY + 4 + (lineIndex * 3.5));
+          });
+          x += colWidths[i];
+        });
+        currentY += maxCellHeight;
+      });
+      pdf.save("gps-tracker-history-report.pdf");
+      toast.success("PDF downloaded successfully!");
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Failed to generate PDF");
+    }
+  };
 
   return (
     <div className="h-screen flex flex-col bg-background">
@@ -140,6 +269,7 @@ const GPSTracker = () => {
           onMoreClick={setMoreItem}
           setHistoryData={setHistoryData}
           setHistoryOpen={setHistoryOpen}
+          handleDownloadPDF={handleDownloadPDF}
         />
         <MapView
           cities={cities}
@@ -149,7 +279,7 @@ const GPSTracker = () => {
           onProcessUpdate={updateEventProcess}
           historyData={historyData}
           historyOpen={historyOpen}
-          setHistoryOpen={setHistoryOpen}
+          mapContainerRef={mapContainerRef}
         />
       </div>
     </div>

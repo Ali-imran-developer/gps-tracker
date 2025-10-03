@@ -29,9 +29,10 @@ interface SidebarProps {
   onMoreClick: (val: any) => void;
   setHistoryData: any;
   setHistoryOpen?: (val: boolean) => void;
+  handleDownloadPDF: (fromTime: string, toTime: string) => void;
 }
 
-const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsData, activeTab = "Objects", 
+const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsData, activeTab = "Objects", handleDownloadPDF,
   onTabChange, onSelectionChange, page, totalPages, handleNext, handlePrevious, onMoreClick, setHistoryData, setHistoryOpen }: SidebarProps) => {
   const [selectedTab, setSelectedTab] = useState(activeTab);
   const tabs = ["Objects", "Events", "Places", "History"];
@@ -333,6 +334,7 @@ const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsDa
             mergedData={mergedData}
             setHistoryData={setHistoryData}
             setHistoryOpen={setHistoryOpen}
+            handleDownloadPDF={handleDownloadPDF}
           />
         </div>
       )}

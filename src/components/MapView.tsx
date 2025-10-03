@@ -1,38 +1,14 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
-import {
-  BarChart3,
-  FileText,
-  MapPin,
-  Info,
-  X,
-  Loader2,
-  EyeOff,
-  Eye,
-} from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { EyeOff, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import {
-  GoogleMap,
-  LoadScript,
-  Marker,
-  Polygon,
-  InfoWindow,
-  Circle,
-  OverlayView,
-  Polyline,
-} from "@react-google-maps/api";
+import { GoogleMap, Polygon, InfoWindow, Circle, Polyline } from "@react-google-maps/api";
 import { mapTools, topControls } from "@/data/map-view";
 import { useGeoFence } from "@/hooks/geoFecnce-hook";
 import { useSelector } from "react-redux";
-import {
-  animateMarker,
-  createSurroundingArea,
-  formatDate,
-  getCarIcon,
-  parseWKT,
-  renderInfoContent,
-} from "@/helper-functions/use-mapview";
+import { animateMarker, formatDate, getCarIcon, parseWKT, renderInfoContent } from "@/helper-functions/use-mapview";
 import { ensureArray } from "@/helper-functions/use-formater";
+import HistoryDrawer from "./history-drawer";
 
 interface MapViewProps {
   cities: any[];
@@ -42,7 +18,7 @@ interface MapViewProps {
   onProcessUpdate: any;
   historyData: any;
   historyOpen: boolean;
-  setHistoryOpen?: (val: boolean) => void;
+  mapContainerRef: any;
 }
 
 const containerStyle = {
@@ -58,7 +34,7 @@ const MapView = ({
   onProcessUpdate,
   historyData,
   historyOpen,
-  setHistoryOpen,
+  mapContainerRef,
 }: MapViewProps) => {
   const [activeControl, setActiveControl] = useState<string | null>(null);
   const [center] = useState({ lat: 30.3384, lng: 71.2781 });
@@ -237,7 +213,6 @@ const MapView = ({
     setShowDetailsPanel(false);
     setSelectedArea(null);
   };
-  console.log("historyData", historyData);
 
   return (
     <div className="flex-1 relative bg-accent min-h-screen overflow-hidden">
@@ -310,36 +285,13 @@ const MapView = ({
         ))}
       </div>
 
-      {historyOpen && historyData && historyData?.length > 0 && (
-        <div className="absolute bottom-4 right-0 left-0 bg-white z-50 flex flex-col gap-1 min-h-[250px] max-h-[300px] overflow-y-auto">
-          <div className="sticky top-0 z-10 bg-[#04003A] text-white text-xs font-bold grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-2 p-2 border-b">
-            <span>DateTime</span>
-            <span>Ignition</span>
-            <span>Latitude</span>
-            <span>Longitude</span>
-            <span>Speed</span>
-            <span>Address</span>
-            <span>Total Distance</span>
-            <button className="absolute top-1 right-1 z-10" onClick={() => setHistoryOpen(false)}><X className="text-white" /></button>
-          </div>
+      <HistoryDrawer 
+        historyData={historyData} 
+        historyOpen={historyOpen}
+        onRowClick={(lat, lng) => {if (mapRef.current) { mapRef.current.panTo({ lat, lng }); mapRef.current.setZoom(18); }}}
+      />
 
-          {ensureArray(historyData)?.map((row: any, idx: number) => (
-            <div key={idx} className="hover:bg-gray-50 border-b border-gray-200 p-2 text-xs">
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-2">
-                <span>{row?.serverTime ?? ""}</span>
-                <span>{row?.ignition ?? ""}</span>
-                <span>{row?.latitude ?? ""}</span>
-                <span>{row?.longitude ?? ""}</span>
-                <span>{row?.speed ?? ""} km/h</span>
-                <span>{row?.address ?? ""}</span>
-                <span>{row?.totalDistance ?? ""}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="w-full h-screen">
+      <div ref={mapContainerRef} className="w-full h-screen">
         <GoogleMap
           mapTypeId="roadmap"
           mapContainerStyle={containerStyle}
@@ -442,7 +394,6 @@ const MapView = ({
                       strokeColor: "#FF0000",
                       scale: 3,
                     },
-                    // color: "",
                     offset: "100%",
                     repeat: "100px",
                   },

@@ -11,12 +11,12 @@ interface HistoryTableProps {
   mergedData: any;
   setHistoryData: any;
   setHistoryOpen?: (val: boolean) => void;
+  handleDownloadPDF: (fromTime: string, toTime: string) => void;
 }
 
-const HistoryTable = ({ mergedData, setHistoryData, setHistoryOpen }: HistoryTableProps) => {
+const HistoryTable = ({ mergedData, setHistoryData, setHistoryOpen, handleDownloadPDF }: HistoryTableProps) => {
   const session = AuthController.getSession();
   const { isLoading, handleGetAllHistory } = useHistory();
-  // const { historyLists } = useSelector((state: any) => state.History);
 
   const FilterSchema = Yup.object().shape({
     deviceId: Yup.string().required("Object is required"),
@@ -40,18 +40,8 @@ const HistoryTable = ({ mergedData, setHistoryData, setHistoryOpen }: HistoryTab
       from = now.clone().startOf("day").subtract(5, "hours").toISOString();
       to = now.clone().subtract(5, "hours").toISOString();
     } else if (filter === "Yesterday") {
-      from = now
-        .clone()
-        .subtract(1, "day")
-        .startOf("day")
-        .subtract(5, "hours")
-        .toISOString();
-      to = now
-        .clone()
-        .subtract(1, "day")
-        .endOf("day")
-        .subtract(5, "hours")
-        .toISOString();
+      from = now.clone().subtract(1, "day").startOf("day").subtract(5, "hours").toISOString();
+      to = now.clone().subtract(1, "day").endOf("day").subtract(5, "hours").toISOString();
     }
     return { from, to };
   };
@@ -89,7 +79,7 @@ const HistoryTable = ({ mergedData, setHistoryData, setHistoryOpen }: HistoryTab
           if (queryParams.deviceId && queryParams.from && queryParams.to) {
             const response = await handleGetAllHistory(queryParams);
             setHistoryData(response);
-            resetForm();
+            // resetForm();
             setHistoryOpen(true);
           }
         }}
@@ -104,7 +94,7 @@ const HistoryTable = ({ mergedData, setHistoryData, setHistoryOpen }: HistoryTab
                 <option value="">Select Object</option>
                 {ensureArray(mergedData)?.map((obj: any) => (
                   <option key={obj?.deviceId} value={obj?.deviceId}>
-                    {obj?.deviceId}
+                    {obj?.devicename ?? ""}
                   </option>
                 ))}
               </Field>
@@ -165,6 +155,21 @@ const HistoryTable = ({ mergedData, setHistoryData, setHistoryOpen }: HistoryTab
               <button
                 type="button"
                 className="bg-[#727270] text-white w-full h-7 text-xs font-semibold rounded-none"
+                onClick={() => {
+                  let from = values.timeFrom;
+                  let to = values.timeTo;
+
+                  if (values.filter === "Today" || values.filter === "Yesterday") {
+                    const range = getDateRange(values.filter);
+                    from = range.from!;
+                    to = range.to!;
+                  } else if (values.filter === "Custom") {
+                    from = moment(values.timeFrom).subtract(5, "hours").toISOString();
+                    to = moment(values.timeTo).subtract(5, "hours").toISOString();
+                  }
+                  console.log("PDF Export Times:", from, to);
+                  handleDownloadPDF(from, to);
+                }}
               >
                 Import/Export
               </button>
