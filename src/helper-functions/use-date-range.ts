@@ -4,19 +4,19 @@ export const getDateRange = (filter: string) => {
   const now = moment().tz("Asia/Karachi");
   let from: any, to: any;
   if (filter === "Today") {
-    from = now.clone().startOf("day").utc().toISOString();
+    from = now.clone().subtract(1, 'day').utc().toISOString();
     to = now.clone().utc().toISOString();
   } else if (filter === "Yesterday") {
-    from = now.clone().subtract(1, "day").startOf("day").utc().toISOString();
-    to = now.clone().subtract(1, "day").endOf("day").utc().toISOString();
+    from = now.clone().subtract(2, 'days').utc().toISOString();
+    to = now.clone().subtract(1, 'day').utc().toISOString();
   } else if (filter === "beforeYesterday") {
-    from = now.clone().subtract(2, "days").startOf("day").utc().toISOString();
-    to = now.clone().subtract(2, "days").endOf("day").utc().toISOString();
+    from = now.clone().subtract(3, 'days').utc().toISOString();
+    to = now.clone().subtract(2, 'days').utc().toISOString();
   } else if (filter === "thisWeek") {
-    from = now.clone().startOf("week").utc().toISOString();
+    from = now.clone().subtract(7, 'days').utc().toISOString();
     to = now.clone().utc().toISOString();
   } else if (filter === "thisMonth") {
-    from = now.clone().startOf("month").utc().toISOString();
+    from = now.clone().subtract(1, 'month').utc().toISOString();
     to = now.clone().utc().toISOString();
   }
   return { from, to };
