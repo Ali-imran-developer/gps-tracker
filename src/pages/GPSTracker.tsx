@@ -148,26 +148,26 @@ const GPSTracker = () => {
 
   useEffect(() => {
     handleCheckalldevices(queryParams);
-    // handleGetEventsData({ page, userid: session?.user?.id });
-    // handleGetTrackLocations(queryParams);
+    handleGetEventsData({ page, userid: session?.user?.id });
+    handleGetTrackLocations(queryParams);
   }, [page]);
 
-  useEffect(() => {
-    let isMounted = true;
-    const fetchData = async () => {
-      if (!session?.user) return;
-      await handleGetEventsData({ page, userid: session.user.id });
-      await handleGetTrackLocations(queryParams);
-    };
-    fetchData();
-    const interval = setInterval(() => {
-      fetchData();
-    }, 20000);
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
-  }, [page, session?.user?.id]);
+  // useEffect(() => {
+  //   let isMounted = true;
+  //   const fetchData = async () => {
+  //     if (!session?.user) return;
+  //     await handleGetEventsData({ page, userid: session.user.id });
+  //     await handleGetTrackLocations(queryParams);
+  //   };
+  //   fetchData();
+  //   const interval = setInterval(() => {
+  //     fetchData();
+  //   }, 20000);
+  //   return () => {
+  //     isMounted = false;
+  //     clearInterval(interval);
+  //   };
+  // }, [page, session?.user?.id]);
 
   const handlePrevious = () => {
     setPage((prev) => Math.max(prev - 1, 1));
