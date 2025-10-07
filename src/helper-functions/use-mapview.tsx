@@ -48,8 +48,8 @@ export const formatVehicleInfoContent = (item: any) => {
         <div className="grid grid-cols-2 gap-2">
           <div>
             <span className="font-medium text-gray-600">Speed:</span>
-            <div className={`font-semibold ${getSpeedColor(item.speed)}`}>
-              {item.speed} km/h
+            <div className={`font-semibold ${getSpeedColor(item?.speed)}`}>
+              {item?.speed?.toFixed(2)} km/h
             </div>
           </div>
 
@@ -156,8 +156,8 @@ export function parseWKT(area: string): google.maps.LatLngLiteral[] {
 export const getCarIcon = () => {
   if (typeof window !== "undefined" && window.google) {
     return {
-      url: "/assets/icons/car2.png",
-      scaledSize: new window.google.maps.Size(70, 40),
+      url: "/assets/icons/car5.png",
+      scaledSize: new window.google.maps.Size(60, 60),
       anchor: new window.google.maps.Point(20, 20),
     };
   }

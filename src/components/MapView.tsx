@@ -47,6 +47,20 @@ const MapView = ({
   const { address } = useSelector((state: any) => state.GeoFence);
   const [showAddress, setShowAddress] = useState(true);
   const [activeMarkers, setActiveMarkers] = useState<Set<string>>(new Set());
+  const [polylinePaths, setPolylinePaths] = useState<Map<string, google.maps.LatLngLiteral[]>>(new Map());
+
+  const updatePolylinePath = (deviceId: string, newPoint: google.maps.LatLngLiteral) => {
+    setPolylinePaths(prev => {
+      const newPaths = new Map(prev);
+      const currentPath = newPaths.get(deviceId) || [];
+      const updatedPath = [...currentPath, newPoint];
+      if (updatedPath.length > 20) {
+        updatedPath.shift();
+      }
+      newPaths.set(deviceId, updatedPath);
+      return newPaths;
+    });
+  };
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -57,6 +71,7 @@ const MapView = ({
       const lng = parseFloat(item?.longi || item?.longitude || "0");
       if (!isFinite(lat) || !isFinite(lng)) return;
       const newPos = { lat, lng };
+      updatePolylinePath(markerId, newPos);
       if (markersRef.current.has(markerId)) {
         const existingMarker = markersRef.current.get(markerId)!;
         const currentPos = existingMarker.getPosition()?.toJSON();
@@ -83,7 +98,7 @@ const MapView = ({
             }
             return newSet;
           });
-        }); 
+        });
         markersRef.current.set(markerId, marker);
       }
     });
@@ -92,6 +107,11 @@ const MapView = ({
         console.log(`🗑️ Removing marker ${id}`);
         marker.setMap(null);
         markersRef.current.delete(id);
+        setPolylinePaths(prev => {
+          const newPaths = new Map(prev);
+          newPaths.delete(id);
+          return newPaths;
+        });
         setActiveMarkers(prev => {
           const newSet = new Set(prev);
           newSet.delete(id);
@@ -208,6 +228,22 @@ const MapView = ({
       }
     }
   }, [historyData]);
+
+  useEffect(() => {
+    setPolylinePaths(prev => {
+      const newPaths = new Map(prev);
+      selectedItems?.forEach((item, idx) => {
+        const markerId = (item?.positionid || item?.deviceId || item?.id || idx)?.toString();
+        const lat = parseFloat(item?.lat || item?.latitude || "0");
+        const lng = parseFloat(item?.longi || item?.longitude || "0");
+        if (isFinite(lat) && isFinite(lng) && !newPaths.has(markerId)) {
+          newPaths.set(markerId, [{ lat, lng }]);
+        }
+      });
+      
+      return newPaths;
+    });
+  }, [selectedItems.length]);
 
   const handleControlClick = (controlId: string) => {
     if (controlId === "dashboard") {
@@ -409,6 +445,32 @@ const MapView = ({
               }}
             />
           )}
+
+          {Array.from(polylinePaths?.entries())?.map(([deviceId, path]) => {
+            if (path?.length < 2) return null;
+            return (
+              <Polyline
+                key={`polyline-${deviceId}`}
+                path={path}
+                options={{
+                  strokeColor: "#FF0000",
+                  strokeOpacity: 0.8,
+                  strokeWeight: 3,
+                  icons: [
+                    {
+                      icon: {
+                        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                        strokeColor: "#00FF00",
+                        scale: 3,
+                      },
+                      offset: "100%",
+                      repeat: "100px",
+                    },
+                  ],
+                }}
+              />
+            );
+          })}
         </GoogleMap>
       </div>
     </div>
