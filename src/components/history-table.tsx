@@ -47,7 +47,6 @@ const HistoryTable = ({ mergedData, setHistoryData, setHistoryOpen, handleDownlo
             user: session?.credentials?.user,
             pass: session?.credentials?.pass,
           };
-          console.log("params", queryParams);
           if (queryParams.deviceId && queryParams.from && queryParams.to) {
             const response = await handleGetAllHistory(queryParams);
             setHistoryData(response);
@@ -139,7 +138,6 @@ const HistoryTable = ({ mergedData, setHistoryData, setHistoryOpen, handleDownlo
                     from = moment(values.timeFrom).utc().toISOString();
                     to = moment(values.timeTo).utc().toISOString();
                   }
-                  console.log("PDF Export Times:", from, to);
                   handleDownloadPDF(from, to);
                 }}
               >

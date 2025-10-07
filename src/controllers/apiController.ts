@@ -30,7 +30,6 @@ export const apiRequest = async (
       return response?.data;
     }
   } catch (error: any) {
-    console.log("@showerror", error);
     throw error?.response
       ? {
           status: error.response.status,

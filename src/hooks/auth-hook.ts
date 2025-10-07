@@ -8,8 +8,6 @@ import { setUser } from "@/store/slices/authSlice";
 export const useAuth = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const session = AuthController.getSession();
-  console.log("session", session);
   const [isLoading, setLoading] = useState(false);
 
   const handlePrimaryLogin = async (data: Login) => {

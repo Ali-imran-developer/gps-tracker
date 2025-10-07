@@ -103,7 +103,7 @@ const EventsTable = ({
 
   return (
     <div className="w-full max-w-md mx-auto border rounded-md shadow-sm bg-white font-sans text-xs">
-      <div className="max-h-[calc(100vh-220px)] relative overflow-y-auto divide-y">
+      <div className="max-h-[calc(100vh-150px)] lg:max-h-[calc(100vh-210px)] relative overflow-y-auto divide-y">
         {mergedData?.map((item: any, index: number) => {
           const rowKey = getRowKey(item, index);
           const isExpanded = expandedRows.includes(rowKey);

@@ -33,6 +33,42 @@ const GPSTracker = () => {
   const { messages } = useAuthWebSocket();
   const dispatch = useDispatch();
 
+  // useEffect(() => {
+  //   if (!messages?.length) return;
+  //   try {
+  //     const latestMessage = JSON.parse(messages[messages.length - 1]);
+  //     if (latestMessage?.devices && Array.isArray(latestMessage?.devices)) {
+  //       const updatedDevices = latestMessage.devices;
+  //       const mergedDevices = ensureArray(geoFenceData)?.map((device: any) => {
+  //         const update = ensureArray(updatedDevices)?.find((d: any) => d?.name === device?.name);
+  //         if (!update) return device;
+  //         const merged = { ...device, ...update };
+  //         return JSON.stringify(merged) === JSON.stringify(device) ? device : merged;
+  //       });
+  //       if (JSON.stringify(mergedDevices) !== JSON.stringify(geoFenceData)) {
+  //         dispatch(setGeoFenceData(mergedDevices));
+  //       }
+  //     }
+
+  //     if (latestMessage?.positions && Array.isArray(latestMessage.positions)) {
+  //       const updatedPositions = latestMessage.positions;
+  //       const mergedPositions = ensureArray(trackLocations)?.map((pos: any) => {
+  //         const update = updatedPositions.find(
+  //           (p: any) => p?.deviceId === pos?.deviceId
+  //         );
+  //         return update ? { ...pos, ...update } : pos;
+  //       });
+  //       if (
+  //         JSON.stringify(mergedPositions) !== JSON.stringify(trackLocations)
+  //       ) {
+  //         dispatch(setTrackLocations(mergedPositions));
+  //       }
+  //     }
+  //   } catch (err) {
+  //     console.error("❌ Failed to parse WebSocket message:", err);
+  //   }
+  // }, [messages, geoFenceData, trackLocations, dispatch]);
+
   useEffect(() => {
     if (!messages?.length) return;
     try {
@@ -40,10 +76,18 @@ const GPSTracker = () => {
       if (latestMessage?.devices && Array.isArray(latestMessage?.devices)) {
         const updatedDevices = latestMessage.devices;
         const mergedDevices = ensureArray(geoFenceData)?.map((device: any) => {
-          const update = ensureArray(updatedDevices)?.find(
-            (d: any) => d?.name === device?.name
-          );
-          return update ? { ...device, ...update } : device;
+          const update = ensureArray(updatedDevices)?.find((d: any) => d?.name === device?.name);
+          if (!update) return device;
+          const merged = {
+            ...device,
+            ...update,
+            id: device.id,
+            deviceId: device.deviceId,
+            name: device.name,
+          };
+          return JSON.stringify(merged) === JSON.stringify(device)
+            ? device
+            : merged;
         });
         if (JSON.stringify(mergedDevices) !== JSON.stringify(geoFenceData)) {
           dispatch(setGeoFenceData(mergedDevices));
@@ -53,14 +97,17 @@ const GPSTracker = () => {
       if (latestMessage?.positions && Array.isArray(latestMessage.positions)) {
         const updatedPositions = latestMessage.positions;
         const mergedPositions = ensureArray(trackLocations)?.map((pos: any) => {
-          const update = updatedPositions.find(
-            (p: any) => p?.deviceId === pos?.deviceId
-          );
-          return update ? { ...pos, ...update } : pos;
+          const update = updatedPositions.find((p: any) => p?.deviceId === pos?.deviceId);
+          return update
+            ? {
+                ...pos,
+                ...update,
+                deviceId: pos.deviceId,
+                id: pos.id,
+              }
+            : pos;
         });
-        if (
-          JSON.stringify(mergedPositions) !== JSON.stringify(trackLocations)
-        ) {
+        if (JSON.stringify(mergedPositions) !== JSON.stringify(trackLocations)) {
           dispatch(setTrackLocations(mergedPositions));
         }
       }
@@ -94,16 +141,33 @@ const GPSTracker = () => {
     setSelectedItems(selected);
   };
 
-  useEffect(() => {
-    const queryParams = {
-      username: session?.credentials?.user ?? "",
-      password: session?.credentials?.pass ?? "",
-    };
+  const queryParams = {
+    username: session?.credentials?.user ?? "",
+    password: session?.credentials?.pass ?? "",
+  };
 
+  useEffect(() => {
     handleCheckalldevices(queryParams);
-    handleGetEventsData({ page, userid: session?.user?.id });
-    handleGetTrackLocations(queryParams);
+    // handleGetEventsData({ page, userid: session?.user?.id });
+    // handleGetTrackLocations(queryParams);
   }, [page]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchData = async () => {
+      if (!session?.user) return;
+      await handleGetEventsData({ page, userid: session.user.id });
+      await handleGetTrackLocations(queryParams);
+    };
+    fetchData();
+    const interval = setInterval(() => {
+      fetchData();
+    }, 20000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [page, session?.user?.id]);
 
   const handlePrevious = () => {
     setPage((prev) => Math.max(prev - 1, 1));
@@ -151,8 +215,12 @@ const GPSTracker = () => {
       pdf.text(mainHeading, (pageWidth - headingWidth) / 2, currentY);
       currentY += 8;
       pdf.setFontSize(10);
-      const formattedFrom = fromTime ? moment(fromTime).tz("Asia/Karachi").format("YYYY-MM-DD") : "";
-      const formattedTo = toTime ? moment(toTime).tz("Asia/Karachi").format("YYYY-MM-DD") : "";
+      const formattedFrom = fromTime
+        ? moment(fromTime).tz("Asia/Karachi").format("YYYY-MM-DD")
+        : "";
+      const formattedTo = toTime
+        ? moment(toTime).tz("Asia/Karachi").format("YYYY-MM-DD")
+        : "";
       const combinedText = `History Report • ${formattedFrom} - ${formattedTo}`;
       const combinedWidth = pdf.getTextWidth(combinedText);
       pdf.text(combinedText, (pageWidth - combinedWidth) / 2, currentY);
@@ -178,7 +246,15 @@ const GPSTracker = () => {
       const mapX = (pageWidth - mapWidth) / 2;
       pdf.addImage(imgData, "PNG", mapX, currentY, mapWidth, mapHeight);
       currentY += mapHeight + 8;
-      const headers = [ "DateTime", "Ign", "Latitude", "Longitude", "Speed", "Address", "Distance" ];
+      const headers = [
+        "DateTime",
+        "Ign",
+        "Latitude",
+        "Longitude",
+        "Speed",
+        "Address",
+        "Distance",
+      ];
       const colWidths = [32, 12, 22, 22, 15, 62, 25];
       pdf.setFontSize(7);
       pdf.setFont("helvetica", "bold");
@@ -236,7 +312,7 @@ const GPSTracker = () => {
           }
           pdf.rect(x, currentY, colWidths[i], maxCellHeight);
           lines.forEach((line: string, lineIndex: number) => {
-            pdf.text(line, x + 1, currentY + 4 + (lineIndex * 3.5));
+            pdf.text(line, x + 1, currentY + 4 + lineIndex * 3.5);
           });
           x += colWidths[i];
         });

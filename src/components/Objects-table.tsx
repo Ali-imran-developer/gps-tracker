@@ -36,25 +36,24 @@ const ObjectsTable = ({
   const [expandedRows, setExpandedRows] = useState<string[]>([]);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
-  const getRowKey = (item: any) => {
-    return item?.id?.toString() || String(item.deviceId) || Math.random().toString();
-  };
+  // const getRowKey = (item: any) => {
+  //   return item?.id?.toString() || String(item.deviceId) || Math.random().toString();
+  // };
+  const getRowKey = (item: any) => String(item?.id ?? item?.deviceId ?? item?.name);
 
   const toggleExpand = (rowKey: string) => {
     setExpandedRows((prev) => prev.includes(rowKey) ? prev.filter((k) => k !== rowKey) : [...prev, rowKey]);
   };
 
-  const mergedData = useMemo(() => {
-    return geoFenceData?.map((device: any) => {
-      const track = trackLocations?.find((t: any) => t?.deviceId === device?.id);
-      return { ...device, ...track };
-    });
-  }, [geoFenceData, trackLocations]);
-
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
-      setSelectedItems(JSON.parse(saved));
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) setSelectedItems(parsed);
+      } catch {
+        console.warn("Invalid saved selectedItems in localStorage");
+      }
     }
   }, []);
 
@@ -62,6 +61,13 @@ const ObjectsTable = ({
     localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedItems));
 
   }, [selectedItems]);
+
+  const mergedData = useMemo(() => {
+    return geoFenceData?.map((device: any) => {
+      const track = trackLocations?.find((t: any) => t?.deviceId === device?.id);
+      return { ...device, ...track };
+    });
+  }, [geoFenceData, trackLocations]);
 
   const filteredData = useMemo(() => {
     if (!mergedData) return null;
@@ -82,14 +88,14 @@ const ObjectsTable = ({
     if (e.target.checked) {
       updated = [...selectedItems, rowKey];
     } else {
-      updated = selectedItems.filter((k) => k !== rowKey);
+      updated = selectedItems?.filter((k) => k !== rowKey);
     }
     setSelectedItems(updated);
     const selectedObjects = ensureArray(mergedData)?.filter((item: any) => updated.includes(getRowKey(item)));
     onSelectionChange?.(selectedObjects ?? []);
   };
 
-  const allSelected = selectedItems.length === filteredData?.length;
+  const allSelected = selectedItems.length > 0 && selectedItems.length === filteredData?.length;
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     let updated: string[];
     if (e.target.checked) {
@@ -139,7 +145,7 @@ const ObjectsTable = ({
       </div>
 
       {isGroupExpanded && (
-        <div className="max-h-[calc(100vh-215px)] overflow-y-auto overflow-x-hidden">
+        <div className="max-h-[calc(100vh-150px)] lg:max-h-[calc(100vh-215px)] overflow-y-auto overflow-x-hidden">
           <div className="flex flex-col divide-y">
             {filteredData?.map((item: any, index: number) => {
               const Icon = icons[item?.category];

@@ -44,7 +44,6 @@ const CreateGeofence = ({ trigger, open, setOpen, editingZone }: AddPlaceDialogP
   const session = AuthController.getSession();
   const circleRef = useRef<google.maps.Circle | null>(null);
   const polygonRef = useRef<google.maps.Polygon | null>(null);
-  console.log("Editing Zone:", editingZone);
 
   const formik = useFormik({
     initialValues: {
