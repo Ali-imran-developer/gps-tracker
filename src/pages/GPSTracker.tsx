@@ -42,7 +42,9 @@ const GPSTracker = () => {
   //       const mergedDevices = ensureArray(geoFenceData)?.map((device: any) => {
   //         const update = ensureArray(updatedDevices)?.find((d: any) => d?.name === device?.name);
   //         if (!update) return device;
-  //         const merged = { ...device, ...update };
+  //         const merged = {
+  //           ...device,
+  //           ...update, id: device.id, deviceId: device.deviceId, name: device.name };
   //         return JSON.stringify(merged) === JSON.stringify(device) ? device : merged;
   //       });
   //       if (JSON.stringify(mergedDevices) !== JSON.stringify(geoFenceData)) {
@@ -53,14 +55,10 @@ const GPSTracker = () => {
   //     if (latestMessage?.positions && Array.isArray(latestMessage.positions)) {
   //       const updatedPositions = latestMessage.positions;
   //       const mergedPositions = ensureArray(trackLocations)?.map((pos: any) => {
-  //         const update = updatedPositions.find(
-  //           (p: any) => p?.deviceId === pos?.deviceId
-  //         );
-  //         return update ? { ...pos, ...update } : pos;
+  //         const update = updatedPositions.find((p: any) => p?.deviceId === pos?.deviceId);
+  //         return update ? { ...pos, ...update, deviceId: pos.deviceId, id: pos.id } : pos;
   //       });
-  //       if (
-  //         JSON.stringify(mergedPositions) !== JSON.stringify(trackLocations)
-  //       ) {
+  //       if (JSON.stringify(mergedPositions) !== JSON.stringify(trackLocations)) {
   //         dispatch(setTrackLocations(mergedPositions));
   //       }
   //     }
@@ -80,14 +78,8 @@ const GPSTracker = () => {
           if (!update) return device;
           const merged = {
             ...device,
-            ...update,
-            id: device.id,
-            deviceId: device.deviceId,
-            name: device.name,
-          };
-          return JSON.stringify(merged) === JSON.stringify(device)
-            ? device
-            : merged;
+            ...update, id: device.id, deviceId: device.deviceId, name: device.name };
+          return JSON.stringify(merged) === JSON.stringify(device) ? device : merged;
         });
         if (JSON.stringify(mergedDevices) !== JSON.stringify(geoFenceData)) {
           dispatch(setGeoFenceData(mergedDevices));
@@ -98,23 +90,47 @@ const GPSTracker = () => {
         const updatedPositions = latestMessage.positions;
         const mergedPositions = ensureArray(trackLocations)?.map((pos: any) => {
           const update = updatedPositions.find((p: any) => p?.deviceId === pos?.deviceId);
-          return update
-            ? {
-                ...pos,
-                ...update,
-                deviceId: pos.deviceId,
-                id: pos.id,
-              }
-            : pos;
+          return update ? { ...pos, ...update, deviceId: pos.deviceId, id: pos.id } : pos;
         });
         if (JSON.stringify(mergedPositions) !== JSON.stringify(trackLocations)) {
           dispatch(setTrackLocations(mergedPositions));
+        }
+        if (selectedItems?.length > 0) {
+          const updatedSelectedItems = ensureArray(selectedItems)?.map(selectedItem => {
+            const update = ensureArray(updatedPositions)?.find((p: any) => 
+              p?.deviceId === selectedItem?.deviceId || p?.id === selectedItem?.id || p?.name === selectedItem?.name
+            );
+
+            if (update) {
+              return {
+                ...selectedItem,
+                ...update,
+                id: selectedItem.id,
+                deviceId: selectedItem.deviceId,
+                name: selectedItem.name,
+                lat: update.lat || update.latitude || selectedItem.lat,
+                latitude: update.latitude || update.lat || selectedItem.latitude,
+                longi: update.longi || update.longitude || selectedItem.longi,
+                longitude: update.longitude || update.longi || selectedItem.longitude,
+                speed: update.speed ?? selectedItem.speed,
+                ...(update.ignition !== undefined && { ignition: update.ignition }),
+                ...(update.serverTime !== undefined && { serverTime: update.serverTime }),
+                ...(update.address !== undefined && { address: update.address }),
+              };
+            }
+            return selectedItem;
+          });
+          const hasChanges = JSON.stringify(updatedSelectedItems) !== JSON.stringify(selectedItems);
+          if (hasChanges) {
+            console.log("🔄 Updating selectedItems with WebSocket data");
+            setSelectedItems(updatedSelectedItems);
+          }
         }
       }
     } catch (err) {
       console.error("❌ Failed to parse WebSocket message:", err);
     }
-  }, [messages, geoFenceData, trackLocations, dispatch]);
+  }, [messages, geoFenceData, trackLocations, dispatch, selectedItems]);
 
   const updateEventProcess = (id: string, process: "0" | "1") => {
     setLocalEvents((prev) => {

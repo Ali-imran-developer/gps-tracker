@@ -50,20 +50,28 @@ const MapView = ({
 
   useEffect(() => {
     if (!mapRef.current) return;
+    const currentMarkerIds = new Set(ensureArray(selectedItems)?.map((item, idx) => (item?.positionid || item?.deviceId || item?.id || idx).toString()));
     selectedItems.forEach((item, idx) => {
-      const markerId = (item?.positionid || idx).toString();
-      const lat = parseFloat(item?.lat || item.latitude || "0");
-      const lng = parseFloat(item?.longi || item.longitude || "0");
+      const markerId = (item?.positionid || item?.deviceId || item?.id || idx).toString();
+      const lat = parseFloat(item?.lat || item?.latitude || "0");
+      const lng = parseFloat(item?.longi || item?.longitude || "0");
       if (!isFinite(lat) || !isFinite(lng)) return;
       const newPos = { lat, lng };
       if (markersRef.current.has(markerId)) {
-        animateMarker(markersRef.current.get(markerId)!, newPos);
+        const existingMarker = markersRef.current.get(markerId)!;
+        const currentPos = existingMarker.getPosition()?.toJSON();
+        if (!currentPos || currentPos.lat !== lat || currentPos.lng !== lng) {
+          console.log(`🔄 Animating marker ${markerId} to new position:`, newPos);
+          animateMarker(existingMarker, newPos);
+        }
+        existingMarker.setTitle(`${item.vehicle || item.name || "Vehicle"} - Speed: ${item.speed ?? 0} km/h`);
       } else {
+        console.log(`📍 Creating new marker ${markerId} at:`, newPos);
         const marker = new google.maps.Marker({
           position: newPos,
           map: mapRef.current,
           icon: getCarIcon(),
-          title: `${item.vehicle || "Vehicle"} - Speed: ${item.speed} km/h`,
+          title: `${item.vehicle || item.name || "Vehicle"} - Speed: ${item.speed ?? 0} km/h`,
         });
         marker.addListener("click", () => {
           setActiveMarkers((prev) => {
@@ -75,18 +83,20 @@ const MapView = ({
             }
             return newSet;
           });
-        });
+        }); 
         markersRef.current.set(markerId, marker);
       }
     });
     markersRef.current.forEach((marker, id) => {
-      if (
-        !selectedItems.find(
-          (item, idx) => (item?.positionid || idx).toString() === id
-        )
-      ) {
+      if (!currentMarkerIds.has(id)) {
+        console.log(`🗑️ Removing marker ${id}`);
         marker.setMap(null);
         markersRef.current.delete(id);
+        setActiveMarkers(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(id);
+          return newSet;
+        });
       }
     });
   }, [selectedItems]);
@@ -95,9 +105,7 @@ const MapView = ({
     if (selectedItems.length > 0 && mapRef.current) {
       selectedItems.forEach((item) => {
         if (item.area?.startsWith("CIRCLE")) {
-          const match = item.area.match(
-            /CIRCLE\s*\(\s*([\d.-]+)\s+([\d.-]+)\s*,\s*([\d.-]+)\s*\)/
-          );
+          const match = item.area.match(/CIRCLE\s*\(\s*([\d.-]+)\s+([\d.-]+)\s*,\s*([\d.-]+)\s*\)/);
           if (match) {
             const lat = parseFloat(match[1]);
             const lng = parseFloat(match[2]);
