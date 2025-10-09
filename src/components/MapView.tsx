@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { EyeOff, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -6,9 +6,10 @@ import { GoogleMap, Polygon, InfoWindow, Circle, Polyline } from "@react-google-
 import { mapTools, topControls } from "@/data/map-view";
 import { useGeoFence } from "@/hooks/geoFecnce-hook";
 import { useSelector } from "react-redux";
-import { animateMarker, formatDate, getCarIcon, parseWKT, renderInfoContent } from "@/helper-functions/use-mapview";
+import { animateMarker, getCarIcon, parseWKT, renderInfoContent } from "@/helper-functions/use-mapview";
 import { ensureArray } from "@/helper-functions/use-formater";
 import HistoryDrawer from "./history-drawer";
+import { formatDate2 } from "@/utils/format-date";
 
 interface MapViewProps {
   cities: any[];
@@ -19,6 +20,7 @@ interface MapViewProps {
   historyData: any;
   historyOpen: boolean;
   mapContainerRef: any;
+  setHistoryOpen: (val: any) => void;
 }
 
 const containerStyle = {
@@ -34,6 +36,7 @@ const MapView = ({
   onProcessUpdate,
   historyData,
   historyOpen,
+  setHistoryOpen,
   mapContainerRef,
 }: MapViewProps) => {
   const [activeControl, setActiveControl] = useState<string | null>(null);
@@ -48,6 +51,7 @@ const MapView = ({
   const [showAddress, setShowAddress] = useState(true);
   const [activeMarkers, setActiveMarkers] = useState<Set<string>>(new Set());
   const [polylinePaths, setPolylinePaths] = useState<Map<string, google.maps.LatLngLiteral[]>>(new Map());
+  const [showPolylines, setShowPolylines] = useState(true);
 
   const updatePolylinePath = (deviceId: string, newPoint: google.maps.LatLngLiteral) => {
     setPolylinePaths(prev => {
@@ -65,28 +69,30 @@ const MapView = ({
   useEffect(() => {
     if (!mapRef.current) return;
     const currentMarkerIds = new Set(ensureArray(selectedItems)?.map((item, idx) => (item?.positionid || item?.deviceId || item?.id || idx).toString()));
-    selectedItems.forEach((item, idx) => {
+    selectedItems.forEach(async (item, idx) => {
       const markerId = (item?.positionid || item?.deviceId || item?.id || idx).toString();
       const lat = parseFloat(item?.lat || item?.latitude || "0");
       const lng = parseFloat(item?.longi || item?.longitude || "0");
       if (!isFinite(lat) || !isFinite(lng)) return;
       const newPos = { lat, lng };
+      const course = parseFloat(item?.course || "0");
       updatePolylinePath(markerId, newPos);
       if (markersRef.current.has(markerId)) {
         const existingMarker = markersRef.current.get(markerId)!;
         const currentPos = existingMarker.getPosition()?.toJSON();
         if (!currentPos || currentPos.lat !== lat || currentPos.lng !== lng) {
-          console.log(`🔄 Animating marker ${markerId} to new position:`, newPos);
           animateMarker(existingMarker, newPos);
         }
-        existingMarker.setTitle(`${item.vehicle || item.name || "Vehicle"} - Speed: ${item.speed ?? 0} km/h`);
+        const newIcon = await getCarIcon(course);
+        existingMarker.setIcon(newIcon);
+        existingMarker.setTitle(`${item?.vehicle || item?.name || "Vehicle"} - Speed: ${item?.speed?.toFixed(2) ?? 0} km/h`);
       } else {
-        console.log(`📍 Creating new marker ${markerId} at:`, newPos);
+        const icon = await getCarIcon(course);
         const marker = new google.maps.Marker({
           position: newPos,
           map: mapRef.current,
-          icon: getCarIcon(),
-          title: `${item.vehicle || item.name || "Vehicle"} - Speed: ${item.speed ?? 0} km/h`,
+          icon,
+          title: `${item?.vehicle || item?.name || "Vehicle"} - Speed: ${item?.speed?.toFixed(2) ?? 0} km/h`,
         });
         marker.addListener("click", () => {
           setActiveMarkers((prev) => {
@@ -104,7 +110,6 @@ const MapView = ({
     });
     markersRef.current.forEach((marker, id) => {
       if (!currentMarkerIds.has(id)) {
-        console.log(`🗑️ Removing marker ${id}`);
         marker.setMap(null);
         markersRef.current.delete(id);
         setPolylinePaths(prev => {
@@ -258,13 +263,27 @@ const MapView = ({
     setSelectedArea(null);
   };
 
+  const handleToolClick = (id: string) => {
+    if (id === "text") {
+      setActiveMarkers((prev) => {
+        if (prev.size > 0) return new Set();
+        const newSet = new Set(selectedItems.map((item, idx) => (item?.positionid || idx).toString()));
+        return newSet;
+      });
+    }
+    if (id === "car") {
+      setShowPolylines((prev) => !prev);
+    }
+    setActiveControl(activeControl === id ? null : id);
+  };
+
   return (
     <div className="flex-1 relative bg-accent min-h-screen overflow-hidden">
       {selectedItems?.length === 1 && address && showAddress && (
         <div className="absolute bottom-14 sm:bottom-[56px] left-1/2 -translate-x-1/2 z-50 w-[90%] sm:w-auto max-w-md">
           <div className="flex items-center justify-between bg-[#04003A] text-white px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-md">
             {showAddress ? (
-              <p className="text-xs sm:text-sm truncate">{formatDate(address)}</p>
+              <p className="text-xs sm:text-sm truncate">{formatDate2(address)}</p>
             ) : (
               <p className="text-xs sm:text-sm italic text-gray-400">Address hidden</p>
             )}
@@ -286,17 +305,7 @@ const MapView = ({
         {topControls?.map((control) => {
           const IconComponent = control.icon;
           return (
-            <Button
-              key={control.id}
-              variant="secondary"
-              size="sm"
-              className={cn(
-                "gap-1 sm:gap-2 bg-map-control hover:bg-map-control-hover text-xs sm:text-sm px-2 sm:px-3 h-7 sm:h-8",
-                activeControl === control.id &&
-                  "bg-map-control-active text-white"
-              )}
-              onClick={() => handleControlClick(control.id)}
-            >
+            <Button key={control.id} variant="secondary" size="sm" onClick={() => handleControlClick(control.id)} className={cn("gap-1 sm:gap-2 bg-map-control hover:bg-map-control-hover text-xs sm:text-sm px-2 sm:px-3 h-7 sm:h-8", activeControl === control.id && "bg-map-control-active text-white")}>
               <IconComponent className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">{control.label}</span>
             </Button>
@@ -306,52 +315,30 @@ const MapView = ({
 
       <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10 flex flex-col gap-0.5 sm:gap-1">
         {mapTools?.map((tool) => (
-          <Button
-            key={tool.id}
-            variant="secondary"
-            size="sm"
-            className={cn(
-              "w-7 h-7 sm:w-8 sm:h-8 p-0 bg-map-control hover:bg-map-control-hover bg-[#04003A]",
-              activeControl === tool.id && "bg-map-control-active text-white"
-            )}
-            onClick={() =>
-              setActiveControl(activeControl === tool.id ? null : tool.id)
-            }
-          >
+          <Button key={tool?.id} variant="secondary" size="sm" className={cn("w-7 h-7 sm:w-8 sm:h-8 p-0 bg-map-control hover:bg-blue-800 bg-[#04003A]", activeControl === tool.id && "bg-blue-800 text-white")} onClick={() => handleToolClick(tool.id)}>
             <div className="w-3 h-3 sm:w-4 sm:h-4 mx-auto">
-              <img
-                src={tool.icon}
-                alt={tool.id}
-                className="w-full h-full object-contain"
-              />
+              <img src={tool?.icon} alt={tool?.id} className="w-full h-full object-contain" />
             </div>
           </Button>
         ))}
       </div>
 
+      {!historyOpen && historyData?.length && (
+        <Button size="lg" onClick={() => setHistoryOpen(true)} className="absolute bottom-16 right-2 sm:right-4 z-10 flex flex-col gap-0.5 sm:gap-1 bg-[#04003A] text-white px-4 py-2 rounded-lg shadow-lg hover:bg-[#1A1766]">
+          Show History Data
+        </Button>
+      )}
+
       <HistoryDrawer 
         historyData={historyData} 
         historyOpen={historyOpen}
+        onClose={() => setHistoryOpen(false)}
         onRowClick={(lat, lng) => {if (mapRef.current) { mapRef.current.panTo({ lat, lng }); mapRef.current.setZoom(18); }}}
       />
 
       <div ref={mapContainerRef} className="w-full h-screen">
-        <GoogleMap
-          mapTypeId="roadmap"
-          mapContainerStyle={containerStyle}
-          center={center}
-          zoom={zoom}
-          onLoad={(map: any) => (mapRef.current = map)}
-          onClick={handleMapClick}
-          options={{
-            zoomControl: false,
-            mapTypeControl: false,
-            scaleControl: false,
-            rotateControl: false,
-            fullscreenControl: false,
-            gestureHandling: "greedy",
-          }}
-        >
+        <GoogleMap mapTypeId="roadmap" mapContainerStyle={containerStyle} center={center} zoom={zoom} onLoad={(map: any) => (mapRef.current = map)} onClick={handleMapClick}
+          options={{ zoomControl: false, mapTypeControl: false, scaleControl: false, rotateControl: false, fullscreenControl: false, gestureHandling: "greedy" }}>
           {selectedItems?.map((item, idx) => {
             if (item?.area?.startsWith("CIRCLE")) {
               const match = item.area.match(
@@ -409,7 +396,7 @@ const MapView = ({
                     options={{
                       disableAutoPan: false,
                       pixelOffset: new google.maps.Size(0, -10),
-                      maxWidth: 250,
+                      maxWidth: 220,
                     }}
                   >
                     <div className="custom-info-window p-0">
@@ -446,7 +433,7 @@ const MapView = ({
             />
           )}
 
-          {Array.from(polylinePaths?.entries())?.map(([deviceId, path]) => {
+          {showPolylines && Array.from(polylinePaths?.entries())?.map(([deviceId, path]) => {
             if (path?.length < 2) return null;
             return (
               <Polyline

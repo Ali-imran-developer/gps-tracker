@@ -6,6 +6,7 @@ import moment from "moment-timezone";
 import { Loader2 } from "lucide-react";
 import { getDateRange } from "@/helper-functions/use-date-range";
 import historySchema from "@/validators/history-schema";
+import SearchableSelect from "./ui/search-input";
 
 interface HistoryTableProps {
   mergedData: any;
@@ -49,8 +50,12 @@ const HistoryTable = ({ mergedData, setHistoryData, setHistoryOpen, handleDownlo
           };
           if (queryParams.deviceId && queryParams.from && queryParams.to) {
             const response = await handleGetAllHistory(queryParams);
-            setHistoryData(response);
-            // resetForm();
+            const selectedDevice = ensureArray(mergedData)?.find((d: any) => d.deviceId === Number(values.deviceId));
+            const responseWithDeviceName = ensureArray(response)?.map((item: any) => ({
+              ...item,
+              deviceName: selectedDevice?.devicename || "",
+            }));
+            setHistoryData(responseWithDeviceName);
             setHistoryOpen(true);
           }
         }}
@@ -61,14 +66,15 @@ const HistoryTable = ({ mergedData, setHistoryData, setHistoryOpen, handleDownlo
               <span className="font-semibold text-gray-700 text-sm">
                 Objects
               </span>
-              <Field as="select" name="deviceId" className="border rounded-none p-1 w-20 md:w-48 h-8 text-sm bg-[#04003A] text-white">
+              <SearchableSelect name="deviceId" data={ensureArray(mergedData) || []} />
+              {/* <Field as="select" name="deviceId" className="border rounded-none p-1 w-20 md:w-48 h-8 text-sm bg-[#04003A] text-white">
                 <option value="">Select Object</option>
                 {ensureArray(mergedData)?.map((obj: any) => (
                   <option key={obj?.deviceId} value={obj?.deviceId}>
                     {obj?.devicename ?? ""}
                   </option>
                 ))}
-              </Field>
+              </Field> */}
             </div>
 
             <div className="flex items-center justify-between">

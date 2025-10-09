@@ -14,6 +14,8 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import toast from "react-hot-toast";
 import moment from "moment-timezone";
+import { useNetworkStatus } from "@/hooks/useInternet";
+import { NoInternetModal } from "@/components/internet-modal";
 
 const GPSTracker = () => {
   const [currentPage, setCurrentPage] = useState<"main" | "dashboard">("main");
@@ -30,8 +32,9 @@ const GPSTracker = () => {
   const [historyData, setHistoryData] = useState([]);
   const [historyOpen, setHistoryOpen] = useState(false);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const { messages } = useAuthWebSocket();
+  const { messages, reconnect } = useAuthWebSocket();
   const dispatch = useDispatch();
+  const isOnline = useNetworkStatus();
 
   // useEffect(() => {
   //   if (!messages?.length) return;
@@ -343,41 +346,23 @@ const GPSTracker = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-background">
-      <Header onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
-      <div className="flex-1 flex overflow-hidden relative">
-        <Sidebar
-          selectedItems={selectedItems}
-          loader={isLoading}
-          geoFenceData={geoFenceData}
-          trackLocations={trackLocations}
-          eventsData={mergedEvents}
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          onSelectionChange={handleSelectionChange}
-          page={page}
-          totalPages={totalPages}
-          handleNext={handleNext}
-          handlePrevious={handlePrevious}
-          onMoreClick={setMoreItem}
-          setHistoryData={setHistoryData}
-          setHistoryOpen={setHistoryOpen}
-          handleDownloadPDF={handleDownloadPDF}
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-        />
-        <MapView
-          cities={cities}
-          moreItem={moreItem}
-          selectedItems={selectedItems}
-          onNavigate={handleNavigation}
-          onProcessUpdate={updateEventProcess}
-          historyData={historyData}
-          historyOpen={historyOpen}
-          mapContainerRef={mapContainerRef}
-        />
+    <>
+      {!isOnline && <NoInternetModal onRefresh={() => reconnect()} />}
+      <div className="h-screen flex flex-col bg-background">
+        <Header onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <div className="flex-1 flex overflow-hidden relative">
+          <Sidebar selectedItems={selectedItems} loader={isLoading} geoFenceData={geoFenceData} trackLocations={trackLocations}
+            eventsData={mergedEvents} activeTab={activeTab} onTabChange={handleTabChange} onSelectionChange={handleSelectionChange} 
+            page={page} totalPages={totalPages} handleNext={handleNext} handlePrevious={handlePrevious} onMoreClick={setMoreItem}
+            setHistoryData={setHistoryData} setHistoryOpen={setHistoryOpen} handleDownloadPDF={handleDownloadPDF} isOpen={isSidebarOpen} 
+            onClose={() => setIsSidebarOpen(false)}
+          />
+          <MapView cities={cities} moreItem={moreItem} selectedItems={selectedItems} onNavigate={handleNavigation} setHistoryOpen={setHistoryOpen}
+            onProcessUpdate={updateEventProcess} historyData={historyData} historyOpen={historyOpen} mapContainerRef={mapContainerRef}
+          />
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

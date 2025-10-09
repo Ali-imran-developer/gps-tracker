@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import AuthController from "@/controllers/authController";
 
 export function useAuthWebSocket() {
@@ -6,6 +6,7 @@ export function useAuthWebSocket() {
   const [log, setLog] = useState("");
   const [messages, setMessages] = useState<string[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimer = useRef<NodeJS.Timeout | null>(null);
   const session = AuthController.getSession();
 
   function appendLog(msg: string) {
@@ -13,7 +14,7 @@ export function useAuthWebSocket() {
     setLog((prev) => `[${time}] ${msg}\n` + prev);
   }
 
-  async function loginAndConnect() {
+  const loginAndConnect = useCallback(async () => {
     try {
       appendLog("Logging in...");
       const resp = await fetch("http://live.farostestip.online/api/session", {
@@ -36,10 +37,11 @@ export function useAuthWebSocket() {
     } catch (err: any) {
       appendLog("Login error: " + err.message);
       setStatus("Login failed");
+      reconnectTimer.current = setTimeout(() => loginAndConnect(), 5000);
     }
-  }
+  }, [session]);
 
-  function connect() {
+  const connect = useCallback(() => {
     appendLog("Connecting to WebSocket...");
     setStatus("Connecting...");
     const ws = new WebSocket("ws://live.farostestip.online/api/socket");
@@ -65,17 +67,32 @@ export function useAuthWebSocket() {
     };
 
     wsRef.current = ws;
-  }
+  }, [loginAndConnect]);
 
   useEffect(() => {
     loginAndConnect();
+    const handleOnline = () => {
+      appendLog("Network online — reconnecting WebSocket...");
+      connect();
+    };
+    window.addEventListener("online", handleOnline);
 
     return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
+      window.removeEventListener("online", handleOnline);
+      if (wsRef.current) wsRef.current.close();
+      if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
     };
   }, []);
 
-  return { messages };
+  function manualReconnect() {
+    appendLog("Manual reconnect triggered by user");
+    connect();
+  }
+
+  return {
+    messages,
+    status,
+    log,
+    reconnect: manualReconnect,
+  };
 }

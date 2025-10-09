@@ -10,10 +10,13 @@ import {
   Key,
   LockKeyhole,
   Loader2,
+  Bus,
+  Ban,
+  Tractor,
 } from "lucide-react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import formatDate from "@/utils/format-date";
+import { formatDate } from "@/utils/format-date";
 import { ensureArray } from "@/helper-functions/use-formater";
 
 interface ObjectTableProps {
@@ -80,7 +83,7 @@ const ObjectsTable = ({
     });
   }, [mergedData, searchTerm]);
 
-  const icons = { car: Car, truck: Truck, motorcycle: Bike, person: User };
+  const icons = { car: Car, truck: Truck, bus: Bus, van: Car, tractor: Tractor, motorcycle: Bike, person: User };
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>, rowKey: string, item: any) => {
     e.stopPropagation();
@@ -148,7 +151,7 @@ const ObjectsTable = ({
         <div className="max-h-[calc(100vh-150px)] lg:max-h-[calc(100vh-215px)] overflow-y-auto overflow-x-hidden">
           <div className="flex flex-col divide-y">
             {filteredData?.map((item: any, index: number) => {
-              const Icon = icons[item?.category];
+              const Icon = icons[item?.category || "car"];
               const rowKey = getRowKey(item);
               const isChecked = selectedItems.includes(rowKey);
               const isExpanded = expandedRows.includes(rowKey);

@@ -1,6 +1,8 @@
+import { formatDate } from "@/utils/format-date";
+
 export const formatVehicleInfoContent = (item: any) => {
-  const getIgnitionStatus = (ignition: string) => {
-    return ignition === "1" || true ? "On" : "Off";
+  const getIgnitionStatus = (ignition: string | boolean) => {
+    return ignition === "1" || ignition === true ? "On" : "Off";
   };
 
   const getSpeedColor = (speed: string) => {
@@ -23,33 +25,35 @@ export const formatVehicleInfoContent = (item: any) => {
   };
 
   return (
-    <div className="p-3 min-w-[250px] max-w-[350px] bg-white rounded-lg shadow-lg">
-      <div className="space-y-2 text-sm">
-        <div className="border-b pb-2 mb-2">
-          <h3 className="font-bold text-lg text-blue-900">
+    <div className="px-2 min-w-[180px] max-w-[220px] bg-white rounded-md shadow-md overflow-y-auto">
+      <div className="space-y-1 text-[11px] leading-tight">
+        <div className="border-b pb-1 mb-1">
+          <h3 className="font-semibold text-sm text-blue-900">
             {item?.vehicle || item?.name}
           </h3>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-1">
           <div>
             <span className="font-medium text-gray-600">IMEI:</span>
-            <div className="text-gray-900 text-xs">
+            <div className="text-gray-900 text-[10px]">
               {item?.imei || item?.uniqueId}
             </div>
           </div>
 
           <div>
-            <span className="font-medium text-gray-600">Model:</span>
-            <div className="text-gray-900">{item.model}</div>
+            <span className="font-medium text-gray-600 ms-6">Model:</span>
+            <div className="text-gray-900 text-[11px] ms-6">
+              {item.model}
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-1">
           <div>
             <span className="font-medium text-gray-600">Speed:</span>
             <div className={`font-semibold ${getSpeedColor(item?.speed)}`}>
-              {item?.speed?.toFixed(2)} km/h
+              {item?.speed?.toFixed(1)} km/h
             </div>
           </div>
 
@@ -67,7 +71,7 @@ export const formatVehicleInfoContent = (item: any) => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-1">
           <div>
             <span className="font-medium text-gray-600">Course:</span>
             <div className="text-gray-900">{item.course}°</div>
@@ -75,14 +79,23 @@ export const formatVehicleInfoContent = (item: any) => {
           {item.contact && (
             <div>
               <span className="font-medium text-gray-600">Contact:</span>
-              <div className="text-gray-900 text-xs">{item?.phone}</div>
+              <div className="text-gray-900 text-[10px]">
+                {item?.phone}
+              </div>
             </div>
           )}
         </div>
 
         <div>
+          <span className="font-medium text-gray-600">Date:</span>
+          <div className="text-gray-900 text-[10px]">
+            {formatDate(item?.lastUpdate) ?? ""}
+          </div>
+        </div>
+
+        <div>
           <span className="font-medium text-gray-600">Position:</span>
-          <div className="text-gray-900 text-xs">
+          <div className="text-gray-900 text-[10px]">
             Lat: {getLat(item)}, Lng: {getLng(item)}
           </div>
         </div>
@@ -102,27 +115,6 @@ export const createSurroundingArea = (item: any) => {
     center: { lat, lng },
     radius,
   };
-};
-
-export const formatDate = (fullAddress: string) => {
-  if (!fullAddress) return "";
-  const [location, rawDate] = fullAddress.split("^");
-  if (!rawDate) return fullAddress;
-  const cleanedDate = rawDate.trim().replace(/\s+/g, " ");
-  const fixedDate = cleanedDate.replace(
-    /(\d{2}):\s*(\d{2}):\s*(\d{2})/,
-    "$1:$2:$3"
-  );
-  const date = new Date(fixedDate.replace(" ", "T"));
-  if (isNaN(date.getTime())) {
-    return fullAddress;
-  }
-  const formattedDate = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Asia/Karachi",
-    dateStyle: "short",
-    timeStyle: "medium",
-  }).format(date);
-  return `${location.trim()} | ${formattedDate}`;
 };
 
 export const renderInfoContent = (item: any, multiple: boolean) => {
@@ -153,12 +145,34 @@ export function parseWKT(area: string): google.maps.LatLngLiteral[] {
   return coordinates;
 }
 
-export const getCarIcon = () => {
+async function getRotatedCarIcon(imageUrl: string, heading: number) {
+  return new Promise<string>((resolve) => {
+    const img = new Image();
+    img.src = imageUrl;
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const size = 60;
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d")!;
+      ctx.clearRect(0, 0, size, size);
+      ctx.save();
+      ctx.translate(size / 2, size / 2);
+      ctx.rotate((heading * Math.PI) / 180);
+      ctx.drawImage(img, -size / 2, -size / 2, size, size);
+      ctx.restore();
+      resolve(canvas.toDataURL());
+    };
+  });
+}
+
+export const getCarIcon = async (heading = 0) => {
   if (typeof window !== "undefined" && window.google) {
+    const rotatedUrl = await getRotatedCarIcon("/assets/icons/car5.png", heading);
     return {
-      url: "/assets/icons/car5.png",
+      url: rotatedUrl,
       scaledSize: new window.google.maps.Size(60, 60),
-      anchor: new window.google.maps.Point(20, 20),
+      anchor: new window.google.maps.Point(30, 30),
     };
   }
   return undefined;

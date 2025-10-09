@@ -75,6 +75,9 @@ const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsDa
   const handleTabClick = (tab: string) => {
     setSelectedTab(tab);
     onTabChange?.(tab);
+    onSelectionChange?.([]);
+    setHistoryData([]);
+    localStorage.clear();
   };
 
   useEffect(() => {
@@ -120,16 +123,7 @@ const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsDa
         </div>
       <div className="flex border-b border-border bg-[#D9D9D9]">
         {tabs?.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => handleTabClick(tab)}
-            className={cn(
-              "flex-1 px-4 py-1 text-sm transition-colors",
-              selectedTab === tab
-                ? "text-[#444444] bg-white"
-                : "text-muted-foreground hover:text-foreground hover:bg-accent"
-            )}
-          >
+          <button key={tab} onClick={() => handleTabClick(tab)} className={cn("flex-1 px-4 py-1 text-sm transition-colors", selectedTab === tab ? "text-[#444444] bg-white" : "text-muted-foreground hover:text-foreground hover:bg-accent")}>
             {tab}
           </button>
         ))}
