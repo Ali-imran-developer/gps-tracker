@@ -1,13 +1,21 @@
 import { useEffect, useState } from "react";
 
-export function useNetworkStatus(pingUrl: string = "https://www.google.com/favicon.ico") {
+export function useNetworkStatus(pingUrl: string = "/favicon.ico") {
   const [isOnline, setIsOnline] = useState(true);
 
   async function checkConnection() {
+    if (!navigator.onLine) {
+      setIsOnline(false);
+      return;
+    }
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 3000);
-      const res = await fetch(pingUrl, { method: "HEAD", signal: controller.signal, cache: "no-store" });
+      const res = await fetch(pingUrl, {
+        method: "HEAD",
+        cache: "no-store",
+        signal: controller.signal,
+      });
       clearTimeout(timeout);
       setIsOnline(res.ok);
     } catch {
