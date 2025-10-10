@@ -27,6 +27,7 @@ const GPSTracker = () => {
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
   const [moreItem, setMoreItem] = useState<any | null>(null);
   const [page, setPage] = useState(1);
+  const [showPlayback, setShowPlayback] = useState(false);
   const totalPages = 50;
   const [localEvents, setLocalEvents] = useState<any[]>([]);
   const [historyData, setHistoryData] = useState([]);
@@ -34,7 +35,7 @@ const GPSTracker = () => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const { messages, reconnect } = useAuthWebSocket();
   const dispatch = useDispatch();
-  const isOnline = useNetworkStatus();
+  // const isOnline = useNetworkStatus();
 
   // useEffect(() => {
   //   if (!messages?.length) return;
@@ -171,22 +172,22 @@ const GPSTracker = () => {
     handleGetTrackLocations(queryParams);
   }, [page]);
 
-  // useEffect(() => {
-  //   let isMounted = true;
-  //   const fetchData = async () => {
-  //     if (!session?.user) return;
-  //     await handleGetEventsData({ page, userid: session.user.id });
-  //     await handleGetTrackLocations(queryParams);
-  //   };
-  //   fetchData();
-  //   const interval = setInterval(() => {
-  //     fetchData();
-  //   }, 20000);
-  //   return () => {
-  //     isMounted = false;
-  //     clearInterval(interval);
-  //   };
-  // }, [page, session?.user?.id]);
+  useEffect(() => {
+    let isMounted = true;
+    const fetchData = async () => {
+      if (!session?.user) return;
+      await handleGetEventsData({ page, userid: session.user.id });
+      await handleGetTrackLocations(queryParams);
+    };
+    fetchData();
+    const interval = setInterval(() => {
+      fetchData();
+    }, 20000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [page, session?.user?.id]);
 
   const handlePrevious = () => {
     setPage((prev) => Math.max(prev - 1, 1));
@@ -347,7 +348,7 @@ const GPSTracker = () => {
 
   return (
     <>
-      {!isOnline && <NoInternetModal onRefresh={() => reconnect()} />}
+      {/* {!isOnline && <NoInternetModal onRefresh={() => reconnect()} />} */}
       <div className="h-screen flex flex-col bg-background">
         <Header onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
         <div className="flex-1 flex overflow-hidden relative">
@@ -355,10 +356,11 @@ const GPSTracker = () => {
             eventsData={mergedEvents} activeTab={activeTab} onTabChange={handleTabChange} onSelectionChange={handleSelectionChange} 
             page={page} totalPages={totalPages} handleNext={handleNext} handlePrevious={handlePrevious} onMoreClick={setMoreItem}
             setHistoryData={setHistoryData} setHistoryOpen={setHistoryOpen} handleDownloadPDF={handleDownloadPDF} isOpen={isSidebarOpen} 
-            onClose={() => setIsSidebarOpen(false)}
+            onClose={() => setIsSidebarOpen(false)} setShowPlayback={setShowPlayback}
           />
           <MapView cities={cities} moreItem={moreItem} selectedItems={selectedItems} onNavigate={handleNavigation} setHistoryOpen={setHistoryOpen}
             onProcessUpdate={updateEventProcess} historyData={historyData} historyOpen={historyOpen} mapContainerRef={mapContainerRef}
+            showPlayback={showPlayback} setShowPlayback={setShowPlayback}
           />
         </div>
       </div>

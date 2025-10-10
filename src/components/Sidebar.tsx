@@ -32,14 +32,16 @@ interface SidebarProps {
   handleDownloadPDF: (fromTime: string, toTime: string) => void;
   isOpen?: boolean;
   onClose?: () => void;
+  setShowPlayback: (val: boolean) => void;
 }
 
 // const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsData, activeTab = "Objects", handleDownloadPDF,
 //   onTabChange, onSelectionChange, page, totalPages, handleNext, handlePrevious, onMoreClick, setHistoryData, setHistoryOpen }: SidebarProps) => {
 // }
 
-const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsData, activeTab = "Objects", handleDownloadPDF,
-  onTabChange, onSelectionChange, page, totalPages, handleNext, handlePrevious, onMoreClick, setHistoryData, setHistoryOpen, isOpen = false, onClose }: SidebarProps) => {
+const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsData, activeTab = "Objects", 
+  handleDownloadPDF, onTabChange, onSelectionChange, page, totalPages, handleNext, handlePrevious, onMoreClick,
+  setHistoryData, setHistoryOpen, isOpen = false, onClose, setShowPlayback }: SidebarProps) => {
   const [selectedTab, setSelectedTab] = useState(activeTab);
   const tabs = ["Objects", "Events", "Places", "History"];
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
@@ -340,6 +342,7 @@ const Sidebar = ({ selectedItems, loader, geoFenceData, trackLocations, eventsDa
             setHistoryData={setHistoryData}
             setHistoryOpen={setHistoryOpen}
             handleDownloadPDF={handleDownloadPDF}
+            setShowPlayback={setShowPlayback}
           />
         </div>
       )}

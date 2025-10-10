@@ -13,11 +13,12 @@ interface HistoryTableProps {
   setHistoryData: any;
   setHistoryOpen?: (val: boolean) => void;
   handleDownloadPDF: (fromTime: string, toTime: string) => void;
+  setShowPlayback: (val: boolean) => void;
 }
 
-const HistoryTable = ({ mergedData, setHistoryData, setHistoryOpen, handleDownloadPDF }: HistoryTableProps) => {
+const HistoryTable = ({ mergedData, setHistoryData, setHistoryOpen, handleDownloadPDF, setShowPlayback }: HistoryTableProps) => {
   const session = AuthController.getSession();
-  const { isLoading, handleGetAllHistory } = useHistory();
+  const { isLoading, handleGetAllHistory, handleGetIgnitionHistory } = useHistory();
 
   return (
     <div className="space-y-2">
@@ -25,6 +26,7 @@ const HistoryTable = ({ mergedData, setHistoryData, setHistoryOpen, handleDownlo
         initialValues={{
           deviceId: "",
           filter: "Today",
+          type: "route",
           timeFrom: "",
           timeTo: "",
         }}
@@ -41,27 +43,52 @@ const HistoryTable = ({ mergedData, setHistoryData, setHistoryOpen, handleDownlo
             from = moment(values.timeFrom).utc().toISOString();
             to = moment(values.timeTo).utc().toISOString();
           }
-          const queryParams = {
-            deviceId: Number(values.deviceId),
-            from,
-            to,
-            user: session?.credentials?.user,
-            pass: session?.credentials?.pass,
+          if(values?.type === "route"){
+            console.log("route clicked");
+            const queryParams = { deviceId: Number(values.deviceId), from, to, user: session?.credentials?.user, pass: session?.credentials?.pass };
+            if (queryParams.deviceId && queryParams.from && queryParams.to) {
+              const response = await handleGetAllHistory(queryParams);
+              const selectedDevice = ensureArray(mergedData)?.find((d: any) => d.deviceId === Number(values.deviceId));
+              const responseWithDeviceName = ensureArray(response)?.map((item: any) => ({
+                ...item,
+                deviceName: selectedDevice?.devicename || "",
+              }));
+              setHistoryData(responseWithDeviceName);
+              setHistoryOpen(true);
+            }
+          }else if(values?.type === "events"){
+            console.log("events clicked");
+            // const queryParams = { deviceId: Number(values.deviceId), from, to };
+            const queryParams = { deviceId: Number(values.deviceId), from, to, user: session?.credentials?.user, pass: session?.credentials?.pass };
+            if (queryParams.deviceId && queryParams.from && queryParams.to) {
+              const response = await handleGetIgnitionHistory(queryParams);
+              const selectedDevice = ensureArray(mergedData)?.find((d: any) => d.deviceId === Number(values.deviceId));
+              const responseWithDeviceName = ensureArray(response)?.map((item: any) => ({
+                ...item,
+                deviceName: selectedDevice?.devicename || "",
+              }));
+              setHistoryData(responseWithDeviceName);
+              setHistoryOpen(true);
+            }
           };
-          if (queryParams.deviceId && queryParams.from && queryParams.to) {
-            const response = await handleGetAllHistory(queryParams);
-            const selectedDevice = ensureArray(mergedData)?.find((d: any) => d.deviceId === Number(values.deviceId));
-            const responseWithDeviceName = ensureArray(response)?.map((item: any) => ({
-              ...item,
-              deviceName: selectedDevice?.devicename || "",
-            }));
-            setHistoryData(responseWithDeviceName);
-            setHistoryOpen(true);
-          }
         }}
       >
         {({ values }) => (
           <Form className="bg-gray-100 px-2 rounded-lg space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-gray-700 text-sm">
+                Type
+              </span>
+              <Field as="select" name="type" className="border rounded-none p-1 w-20 md:w-48 h-8 text-sm bg-[#04003A] text-white">
+                <option value="route">Route</option>
+                <option value="events">Events</option>
+                <option value="trips">Trips</option>
+                <option value="stops">Stops</option>
+                <option value="summary">Summary</option>
+                <option value="dailySummary">Daily Summary</option>
+              </Field>
+            </div>
+
             <div className="flex items-center justify-between">
               <span className="font-semibold text-gray-700 text-sm">
                 Objects
@@ -117,21 +144,13 @@ const HistoryTable = ({ mergedData, setHistoryData, setHistoryOpen, handleDownlo
             )}
 
             <div className="grid grid-cols-3 gap-1 mt-1">
-              <button
-                type="submit"
-                className="bg-[#727270] text-white w-full h-7 text-xs font-semibold rounded-none"
-              >
-                Show
+              <button type="submit" className="bg-[#727270] text-white flex items-center justify-center w-full h-7 text-xs font-semibold rounded-none">
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Show"}
               </button>
-              <button
-                type="button"
-                className="bg-[#727270] text-white w-full h-7 text-xs font-semibold rounded-none"
-              >
-                Hide
+              <button type="button" onClick={() => { setShowPlayback(true); setHistoryOpen(false); }} className="bg-[#727270] text-white w-full h-7 text-xs font-semibold rounded-none">
+                Play
               </button>
-              <button
-                type="button"
-                className="bg-[#727270] text-white w-full h-7 text-xs font-semibold rounded-none"
+              <button type="button" className="bg-[#727270] text-white w-full h-7 text-xs font-semibold rounded-none"
                 onClick={() => {
                   let from = values.timeFrom;
                   let to = values.timeTo;
@@ -163,9 +182,9 @@ const HistoryTable = ({ mergedData, setHistoryData, setHistoryOpen, handleDownlo
       </Formik>
 
       <div className="bg-white shadow rounded-lg max-h-[calc(100vh-430px)] overflow-hidden">
-        <div className="min-h-[300px] flex items-center w-full justify-center">
+        {/* <div className="min-h-[300px] flex items-center w-full justify-center">
           {isLoading ? <Loader2 className="w-8 h-8 animate-spin" /> : ""}
-        </div>
+        </div> */}
       </div>
     </div>
   );

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { EyeOff, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { GoogleMap, Polygon, InfoWindow, Circle, Polyline } from "@react-google-maps/api";
+import { GoogleMap, Polygon, InfoWindow, Circle, Polyline, Marker } from "@react-google-maps/api";
 import { mapTools, topControls } from "@/data/map-view";
 import { useGeoFence } from "@/hooks/geoFecnce-hook";
 import { useSelector } from "react-redux";
@@ -10,6 +10,8 @@ import { animateMarker, getCarIcon, parseWKT, renderInfoContent } from "@/helper
 import { ensureArray } from "@/helper-functions/use-formater";
 import HistoryDrawer from "./history-drawer";
 import { formatDate2 } from "@/utils/format-date";
+import toast from "react-hot-toast";
+import MapPlayback from "./mapPlayback";
 
 interface MapViewProps {
   cities: any[];
@@ -21,6 +23,8 @@ interface MapViewProps {
   historyOpen: boolean;
   mapContainerRef: any;
   setHistoryOpen: (val: any) => void;
+  showPlayback: boolean;
+  setShowPlayback: (val: boolean) => void;
 }
 
 const containerStyle = {
@@ -28,17 +32,8 @@ const containerStyle = {
   height: "100%",
 };
 
-const MapView = ({
-  cities,
-  moreItem,
-  selectedItems,
-  onNavigate,
-  onProcessUpdate,
-  historyData,
-  historyOpen,
-  setHistoryOpen,
-  mapContainerRef,
-}: MapViewProps) => {
+const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate, historyData, historyOpen, 
+  setHistoryOpen, mapContainerRef, showPlayback, setShowPlayback }: MapViewProps) => {
   const [activeControl, setActiveControl] = useState<string | null>(null);
   const [center] = useState({ lat: 30.3384, lng: 71.2781 });
   const [zoom, setZoom] = useState(15);
@@ -52,6 +47,10 @@ const MapView = ({
   const [activeMarkers, setActiveMarkers] = useState<Set<string>>(new Set());
   const [polylinePaths, setPolylinePaths] = useState<Map<string, google.maps.LatLngLiteral[]>>(new Map());
   const [showPolylines, setShowPolylines] = useState(true);
+  const [autoFocusEnabled, setAutoFocusEnabled] = useState(false);
+  const [rulerEnabled, setRulerEnabled] = useState(false);
+  const [selectedMapPoint, setSelectedMapPoint] = useState<google.maps.LatLngLiteral | null>(null);
+  const [distanceInfo, setDistanceInfo] = useState<{ distance: number; vehicleName: string } | null>(null);
 
   const updatePolylinePath = (deviceId: string, newPoint: google.maps.LatLngLiteral) => {
     setPolylinePaths(prev => {
@@ -127,7 +126,7 @@ const MapView = ({
   }, [selectedItems]);
 
   useEffect(() => {
-    if (selectedItems.length > 0 && mapRef.current) {
+    if (!autoFocusEnabled || !mapRef.current || selectedItems.length === 0) return;
       selectedItems.forEach((item) => {
         if (item.area?.startsWith("CIRCLE")) {
           const match = item.area.match(/CIRCLE\s*\(\s*([\d.-]+)\s+([\d.-]+)\s*,\s*([\d.-]+)\s*\)/);
@@ -155,8 +154,8 @@ const MapView = ({
           mapRef.current.setZoom(15);
         }
       });
-    }
-  }, [selectedItems]);
+    setAutoFocusEnabled(false);
+  }, [autoFocusEnabled, selectedItems]);
 
   useEffect(() => {
     if (selectedItems.length > 0 && mapRef.current) {
@@ -258,21 +257,53 @@ const MapView = ({
     }
   };
 
-  const handleMapClick = () => {
+  const handleMapClick = (e?: google.maps.MapMouseEvent) => {
     setShowDetailsPanel(false);
     setSelectedArea(null);
+    if (rulerEnabled && e?.latLng && selectedItems?.length > 0) {
+      const lat = e.latLng.lat();
+      const lng = e.latLng.lng();
+      setSelectedMapPoint({ lat, lng });
+      const selectedItem = selectedItems[0];
+      const vehLat = parseFloat(selectedItem?.lat || selectedItem?.latitude || "0");
+      const vehLng = parseFloat(selectedItem?.longi || selectedItem?.longitude || "0");
+      const vehicleName = selectedItem?.vehicle || selectedItem?.name || "Vehicle";
+      const R = 6371;
+      const dLat = ((lat - vehLat) * Math.PI) / 180;
+      const dLng = ((lng - vehLng) * Math.PI) / 180;
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos((vehLat * Math.PI) / 180) *
+        Math.cos((lat * Math.PI) / 180) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const distance = R * c;
+      setDistanceInfo({ distance, vehicleName });
+    }
   };
 
   const handleToolClick = (id: string) => {
     if (id === "text") {
       setActiveMarkers((prev) => {
         if (prev.size > 0) return new Set();
-        const newSet = new Set(selectedItems.map((item, idx) => (item?.positionid || idx).toString()));
+        const newSet = new Set(selectedItems?.map((item, idx) => (item?.positionid || idx).toString()));
         return newSet;
       });
     }
     if (id === "car") {
       setShowPolylines((prev) => !prev);
+    }
+    if (id === "map") {
+      setAutoFocusEnabled(true);
+    } else {
+      setAutoFocusEnabled(false);
+    }
+    if (id === "chart") {
+      if (!selectedItems?.length) {
+        toast.error("Please select a vehicle first!");
+        return;
+      }
+      setRulerEnabled((prev) => !prev);
+      setSelectedMapPoint(null);
+      setDistanceInfo(null);
+      console.log("Ruler mode:", !rulerEnabled);
     }
     setActiveControl(activeControl === id ? null : id);
   };
@@ -283,7 +314,7 @@ const MapView = ({
         <div className="absolute bottom-14 sm:bottom-[56px] left-1/2 -translate-x-1/2 z-50 w-[90%] sm:w-auto max-w-md">
           <div className="flex items-center justify-between bg-[#04003A] text-white px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-md">
             {showAddress ? (
-              <p className="text-xs sm:text-sm truncate">{formatDate2(address)}</p>
+              <p className="text-xs sm:text-sm">{formatDate2(address)}</p>
             ) : (
               <p className="text-xs sm:text-sm italic text-gray-400">Address hidden</p>
             )}
@@ -315,7 +346,7 @@ const MapView = ({
 
       <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10 flex flex-col gap-0.5 sm:gap-1">
         {mapTools?.map((tool) => (
-          <Button key={tool?.id} variant="secondary" size="sm" className={cn("w-7 h-7 sm:w-8 sm:h-8 p-0 bg-map-control hover:bg-blue-800 bg-[#04003A]", activeControl === tool.id && "bg-blue-800 text-white")} onClick={() => handleToolClick(tool.id)}>
+          <Button key={tool?.id} variant="secondary" size="sm" className={cn("w-7 h-7 sm:w-8 sm:h-8 p-0 bg-map-control hover:bg-blue-800 bg-[#04003A]")} onClick={() => handleToolClick(tool.id)}>
             <div className="w-3 h-3 sm:w-4 sm:h-4 mx-auto">
               <img src={tool?.icon} alt={tool?.id} className="w-full h-full object-contain" />
             </div>
@@ -323,7 +354,7 @@ const MapView = ({
         ))}
       </div>
 
-      {!historyOpen && historyData?.length && (
+      {!historyOpen && historyData?.length > 0 && (
         <Button size="lg" onClick={() => setHistoryOpen(true)} className="absolute bottom-16 right-2 sm:right-4 z-10 flex flex-col gap-0.5 sm:gap-1 bg-[#04003A] text-white px-4 py-2 rounded-lg shadow-lg hover:bg-[#1A1766]">
           Show History Data
         </Button>
@@ -408,7 +439,7 @@ const MapView = ({
             );
           })}
 
-          {historyData && historyData.length > 0 && (
+          {historyData && historyData?.length > 0 && (
             <Polyline
               path={ensureArray(historyData)?.map((point: any) => ({
                 lat: parseFloat(point.latitude),
@@ -458,6 +489,25 @@ const MapView = ({
               />
             );
           })}
+
+          {rulerEnabled && selectedMapPoint && distanceInfo && (
+            <>
+              <Marker position={selectedMapPoint} icon={{ path: google.maps.SymbolPath.CIRCLE, scale: 6, fillColor: "#00BFFF", fillOpacity: 0.9, strokeWeight: 2, strokeColor: "#0044FF", }} />
+              <InfoWindow position={selectedMapPoint} options={{ disableAutoPan: true }}>
+                <div className="p-2 text-sm">
+                  <strong>{distanceInfo?.vehicleName}</strong>
+                  <br />
+                  Distance: {distanceInfo?.distance?.toFixed(2)} km
+                  <br />
+                  <span className="text-gray-500 italic">Click map to update</span>
+                </div>
+              </InfoWindow>
+            </>
+          )}
+
+          {showPlayback && mapRef.current && historyData && historyData?.length > 1 && (
+            <MapPlayback map={mapRef.current} modalOpen={() => setShowPlayback(true)} historyData={historyData} initialPlaying={false} onFinish={() =>  toast.success("Video is finished!")} />
+          )}
         </GoogleMap>
       </div>
     </div>
