@@ -3,6 +3,8 @@ import Index from "./pages/Index";
 import WebSocket from "./pages/Websocket";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
+import AdminUser from "./pages/admin";
+import AdminObjects from "./pages/admin/objects";
 import AuthController from "./controllers/authController";
 import { MapProvider } from "./config/mapProvider";
 
@@ -29,6 +31,8 @@ const App = () => {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+          <Route path="/admin/users" element={<AdminUser />} />
+          <Route path="/admin/objects" element={<AdminObjects />} />
           <Route path="/websocket" element={<WebSocket />} />
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="*" element={<NotFound />} />

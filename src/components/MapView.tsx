@@ -84,14 +84,14 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate,
         }
         const newIcon = await getCarIcon(course);
         existingMarker.setIcon(newIcon);
-        existingMarker.setTitle(`${item?.vehicle || item?.name || "Vehicle"} - Speed: ${item?.speed?.toFixed(2) ?? 0} km/h`);
+        existingMarker.setTitle(`${item?.vehicle || item?.name || "Vehicle"} - Speed: ${item?.speed ? Number(item?.speed)?.toFixed(2) : ""} km/h`);
       } else {
         const icon = await getCarIcon(course);
         const marker = new google.maps.Marker({
           position: newPos,
           map: mapRef.current,
           icon,
-          title: `${item?.vehicle || item?.name || "Vehicle"} - Speed: ${item?.speed?.toFixed(2) ?? 0} km/h`,
+          title: `${item?.vehicle || item?.name || "Vehicle"} - Speed: ${item?.speed ? Number(item?.speed)?.toFixed(2) : ""} km/h`,
         });
         marker.addListener("click", () => {
           setActiveMarkers((prev) => {

@@ -15,12 +15,14 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { logout } from "@/utils/auth";
+import { useNavigate } from "react-router-dom";
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
 }
 
 const Header = ({ onToggleSidebar }: HeaderProps) => {
+  const navigate = useNavigate();
   return (
     <header className="bg-card border-b border-border flex items-center justify-between">
       {/* Left side */}
@@ -71,7 +73,7 @@ const Header = ({ onToggleSidebar }: HeaderProps) => {
           <Badge className="rounded-md text-gray-600 text-xs" variant="outline">190</Badge>
         </Button>
 
-        <Button variant="ghost" size="sm" className="gap-1 sm:gap-2 text-[#444444] h-8 px-2 text-xs sm:text-sm">
+        <Button onClick={() => navigate("/admin/users")} variant="ghost" size="sm" className="gap-1 sm:gap-2 text-[#444444] h-8 px-2 text-xs sm:text-sm">
           <div className="w-5 h-5 sm:w-6 sm:h-6">
             <img src="/assets/icons/user.png" alt="User Icon" className="w-full h-full object-contain" />
           </div>

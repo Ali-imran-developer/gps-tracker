@@ -35,7 +35,7 @@ const GPSTracker = () => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const { messages, reconnect } = useAuthWebSocket();
   const dispatch = useDispatch();
-  const isOnline = useNetworkStatus();
+  // const isOnline = useNetworkStatus();
 
   // useEffect(() => {
   //   if (!messages?.length) return;
@@ -348,7 +348,7 @@ const GPSTracker = () => {
 
   return (
     <>
-      {!isOnline && <NoInternetModal onRefresh={() => reconnect()} />}
+      {/* {!isOnline && <NoInternetModal onRefresh={() => reconnect()} />} */}
       <div className="h-screen flex flex-col bg-background">
         <Header onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
         <div className="flex-1 flex overflow-hidden relative">

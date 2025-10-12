@@ -53,19 +53,13 @@ export const formatVehicleInfoContent = (item: any) => {
           <div>
             <span className="font-medium text-gray-600">Speed:</span>
             <div className={`font-semibold ${getSpeedColor(item?.speed)}`}>
-              {item?.speed?.toFixed(1)} km/h
+              {item?.speed ? Number(item?.speed)?.toFixed(2) : ""} km/h
             </div>
           </div>
 
           <div>
             <span className="font-medium text-gray-600">Ignition:</span>
-            <div
-              className={`font-semibold ${
-                item?.ignition === "1" || item?.attribute?.ignition === true
-                  ? "text-green-600"
-                  : "text-red-600"
-              }`}
-            >
+            <div className={`font-semibold ${item?.ignition === "1" || item?.attribute?.ignition === true ? "text-green-600" : "text-red-600"}`}>
               {getIgnitionStatus(item?.ignition || item?.attribute?.ignition)}
             </div>
           </div>
