@@ -2,7 +2,7 @@ import { BarChart3, FileText, Info, MapPin } from "lucide-react";
 
 export const topControls = [
   { id: "dashboard", label: "Dashboard", icon: BarChart3 },
-  { id: "reporting", label: "Reporting", icon: FileText },
+  // { id: "reporting", label: "Reporting", icon: FileText },
   { id: "object-control", label: "Object Control", icon: MapPin },
   { id: "about", label: "About Us", icon: Info },
 ];

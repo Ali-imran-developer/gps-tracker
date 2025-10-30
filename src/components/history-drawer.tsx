@@ -40,10 +40,14 @@ export default function HistoryDrawer({ historyOpen, historyData, onRowClick, on
               <div key={idx} onClick={() => isFinite(lat) && isFinite(lng) && onRowClick?.(lat, lng)} className="hover:bg-gray-50 border-b border-gray-200 p-2 text-xs min-w-[800px] cursor-pointer">
                 <div className="grid grid-cols-12 gap-2">
                   <span className="col-span-1 text-[10px]">{row?.deviceName ?? ""}</span>
-                  <span className="col-span-2 ms-4">{formatDate(row?.serverTime ?? row?.eventTime) ?? ""}</span>
+                  <span className="col-span-2 ms-4">{formatDate(row?.serverTime ?? row?.eventTime ?? row?.DateTime1) ?? ""}</span>
                   <span className="col-span-1">{row?.ignition ?? row?.type ?? ""}</span>
-                  <span className="col-span-1">{row?.latitude ?? ""}</span>
-                  <span className="col-span-1">{row?.longitude ?? ""}</span>
+                  <span className="col-span-1">
+                    {Number(row?.latitude) && !isNaN(Number(row?.latitude)) ? Number(row.latitude)?.toFixed(4) : row?.latitude ?? ""}
+                  </span>
+                  <span className="col-span-1">
+                    {Number(row?.longitude) && !isNaN(Number(row?.longitude)) ? Number(row.longitude).toFixed(4) : row?.longitude ?? ""}
+                  </span>
                   {row?.speed && (<span className="col-span-1">{row?.speed ?? ""} km/h</span>)}
                   <span className="col-span-4">{row?.address !== "" ? row?.address : "No Address"}</span>
                   {row?.totalDistance && (<span className="col-span-1">{row?.totalDistance ?? ""}</span>)}

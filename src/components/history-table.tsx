@@ -18,7 +18,7 @@ interface HistoryTableProps {
 
 const HistoryTable = ({ mergedData, setHistoryData, setHistoryOpen, handleDownloadPDF, setShowPlayback }: HistoryTableProps) => {
   const session = AuthController.getSession();
-  const { isLoading, handleGetAllHistory, handleGetIgnitionHistory } = useHistory();
+  const { isLoading, handleGetAllHistory, handleGetIgnitionHistory, handleGetIdleHistory } = useHistory();
 
   return (
     <div className="space-y-2">
@@ -70,7 +70,19 @@ const HistoryTable = ({ mergedData, setHistoryData, setHistoryOpen, handleDownlo
               setHistoryData(responseWithDeviceName);
               setHistoryOpen(true);
             }
-          };
+          }else if(values?.type === "trips"){
+            const queryParams = { deviceId: Number(values.deviceId), from, to };
+            if (queryParams?.deviceId && queryParams?.from && queryParams?.to) {
+              const response = await handleGetIdleHistory(queryParams);
+              const selectedDevice = ensureArray(mergedData)?.find((d: any) => d.deviceId === Number(values.deviceId));
+              const responseWithDeviceName = ensureArray(response)?.map((item: any) => ({
+                ...item,
+                deviceName: selectedDevice?.devicename || "",
+              }));
+              setHistoryData(responseWithDeviceName);
+              setHistoryOpen(true);
+            }
+          }
         }}
       >
         {({ values }) => (

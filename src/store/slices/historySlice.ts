@@ -3,11 +3,13 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 interface UserState {
   historyLists: [];
   ignitionHistory: [];
+  idleHistory: [];
 }
 
 const initialState: UserState = {
   historyLists: [],
   ignitionHistory: [],
+  idleHistory: [],
 };
 
 export const HistorySlice = createSlice({
@@ -20,8 +22,11 @@ export const HistorySlice = createSlice({
     setIgnitionHistory: (state, action: PayloadAction<any>) => {
       state.ignitionHistory = action.payload;
     },
+    setIdleHistory: (state, action: PayloadAction<any>) => {
+      state.idleHistory = action.payload;
+    },
   },
 });
 
-export const { setHistoryData, setIgnitionHistory } = HistorySlice.actions;
+export const { setHistoryData, setIgnitionHistory, setIdleHistory } = HistorySlice.actions;
 export default HistorySlice.reducer;

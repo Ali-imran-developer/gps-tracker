@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import HistoryController from "@/controllers/historyController";
-import { setHistoryData, setIgnitionHistory } from "@/store/slices/historySlice";
+import { setHistoryData, setIdleHistory, setIgnitionHistory } from "@/store/slices/historySlice";
 
 export const useHistory = () => {
   const dispatch = useDispatch();
@@ -37,9 +37,25 @@ export const useHistory = () => {
     }
   };
 
+  const handleGetIdleHistory = async (data: { deviceId: number, from: string | number, to: string | number }) => {
+    try {
+      setLoading(true);
+      const response: any = await HistoryController.getIdleReport(data);
+      if(response){
+        dispatch(setIdleHistory(response))
+      }
+      return response;
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     isLoading,
     handleGetAllHistory,
+    handleGetIdleHistory,
     handleGetIgnitionHistory,
   };
 };

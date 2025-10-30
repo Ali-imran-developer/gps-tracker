@@ -1,4 +1,4 @@
-import { historyApiurl } from "@/config/constants";
+import { historyApiurl, adminURL } from "@/config/constants";
 import { apiRequest } from "./apiController";
 
 class HistoryController {
@@ -7,6 +7,9 @@ class HistoryController {
   }
   static getIgnitionHistory(data: { deviceId: number, from: string | number, to: string | number }) {
     return apiRequest("get", `${historyApiurl}/web1/geofence/newappeventhistory.php?deviceId=${data?.deviceId}&from=${data?.from}&to=${data?.to}`);
+  }
+  static getIdleReport(data: { deviceId: number, from: string | number, to: string | number }) {
+    return apiRequest("get", `${adminURL}/web1/geofence/idle/newappidlereport.php?deviceId=${data?.deviceId}&from=${data?.from}&to=${data?.to}`);
   }
 }
 

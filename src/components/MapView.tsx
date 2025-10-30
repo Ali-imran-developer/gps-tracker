@@ -12,6 +12,7 @@ import HistoryDrawer from "./history-drawer";
 import { formatDate2 } from "@/utils/format-date";
 import toast from "react-hot-toast";
 import MapPlayback from "./mapPlayback";
+import ObjectsModal from "./ObjectsModal";
 
 interface MapViewProps {
   cities: any[];
@@ -51,6 +52,7 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate,
   const [rulerEnabled, setRulerEnabled] = useState(false);
   const [selectedMapPoint, setSelectedMapPoint] = useState<google.maps.LatLngLiteral | null>(null);
   const [distanceInfo, setDistanceInfo] = useState<{ distance: number; vehicleName: string } | null>(null);
+  const [objectsModalOpen, setObjectsModalOpen] = useState(false);
 
   const updatePolylinePath = (deviceId: string, newPoint: google.maps.LatLngLiteral) => {
     setPolylinePaths(prev => {
@@ -252,6 +254,12 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate,
   const handleControlClick = (controlId: string) => {
     if (controlId === "dashboard") {
       onNavigate?.("dashboard");
+    } else if (controlId === "object-control") {
+      if (selectedItems.length > 0) {
+        setObjectsModalOpen(true);
+      } else {
+        toast.error("Please select at least one object first!");
+      }
     } else {
       setActiveControl(activeControl === controlId ? null : controlId);
     }
@@ -366,6 +374,10 @@ const MapView = ({ cities, moreItem, selectedItems, onNavigate, onProcessUpdate,
         onClose={() => setHistoryOpen(false)}
         onRowClick={(lat, lng) => {if (mapRef.current) { mapRef.current.panTo({ lat, lng }); mapRef.current.setZoom(18); }}}
       />
+
+      {objectsModalOpen && (
+        <ObjectsModal open={objectsModalOpen} onClose={() => setObjectsModalOpen(false)} />
+      )}
 
       <div ref={mapContainerRef} className="w-full h-screen">
         <GoogleMap mapTypeId="roadmap" mapContainerStyle={containerStyle} center={center} zoom={zoom} onLoad={(map: any) => (mapRef.current = map)} onClick={handleMapClick}
