@@ -66,8 +66,8 @@ const ObjectsTable = ({
   }, [selectedItems]);
 
   const mergedData = useMemo(() => {
-    return geoFenceData?.map((device: any) => {
-      const track = trackLocations?.find((t: any) => t?.deviceId === device?.id);
+    return ensureArray(geoFenceData)?.map((device: any) => {
+      const track = ensureArray(trackLocations)?.find((t: any) => t?.deviceId === device?.id);
       return { ...device, ...track };
     });
   }, [geoFenceData, trackLocations]);
@@ -77,9 +77,7 @@ const ObjectsTable = ({
     return ensureArray(mergedData)?.filter((item: any) => {
       if (!searchTerm) return true;
       const lower = searchTerm?.toLowerCase();
-      return Object.values(item)?.some((val) =>
-        String(val)?.toLowerCase()?.includes(lower)
-      );
+      return Object?.values(item)?.some((val) => String(val)?.toLowerCase()?.includes(lower));
     });
   }, [mergedData, searchTerm]);
 
@@ -94,11 +92,11 @@ const ObjectsTable = ({
       updated = selectedItems?.filter((k) => k !== rowKey);
     }
     setSelectedItems(updated);
-    const selectedObjects = ensureArray(mergedData)?.filter((item: any) => updated.includes(getRowKey(item)));
+    const selectedObjects = ensureArray(mergedData)?.filter((item: any) => updated?.includes(getRowKey(item)));
     onSelectionChange?.(selectedObjects ?? []);
   };
 
-  const allSelected = selectedItems.length > 0 && selectedItems.length === filteredData?.length;
+  const allSelected = selectedItems?.length > 0 && selectedItems?.length === filteredData?.length;
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     let updated: string[];
     if (e.target.checked) {
